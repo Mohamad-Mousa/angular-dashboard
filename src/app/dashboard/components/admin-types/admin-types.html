@@ -1,0 +1,84 @@
+<div class="card border-0 shadow-sm h-100">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <p class="text-uppercase text-muted fw-semibold small mb-1">Roles</p>
+        <h2 class="h4 mb-0">Admin Types</h2>
+      </div>
+      <app-button
+        label="Create Type"
+        size="sm"
+        variant="primary"
+        icon="add"
+        (click)="openCreateTypeDialog()"
+      ></app-button>
+    </div>
+
+    <app-table
+      [columns]="columns"
+      [rows]="adminTypes"
+      [showActions]="true"
+      [enableFilters]="true"
+      [enableSorting]="true"
+    ></app-table>
+  </div>
+</div>
+
+<app-dialog
+  [open]="isCreateDialogOpen"
+  title="Create admin type"
+  description="Group permissions into reusable admin roles."
+  width="560px"
+  (closed)="closeCreateTypeDialog()"
+>
+  <form dialog-body [formGroup]="createTypeForm" class="form-grid">
+    <label>
+      <span>Type name</span>
+      <input type="text" formControlName="name" placeholder="Analytics Admin" />
+    </label>
+
+    <label>
+      <span>Permissions count</span>
+      <input type="number" formControlName="permissions" min="1" />
+    </label>
+
+    <label>
+      <span>Description</span>
+      <textarea
+        rows="3"
+        formControlName="description"
+        placeholder="Describe what this admin can manage..."
+      ></textarea>
+    </label>
+
+    <fieldset class="permissions">
+      <legend>Default capabilities</legend>
+      <label>
+        <input type="checkbox" formControlName="canRead" />
+        Read
+      </label>
+      <label>
+        <input type="checkbox" formControlName="canEdit" />
+        Edit
+      </label>
+      <label>
+        <input type="checkbox" formControlName="canDelete" />
+        Delete
+      </label>
+    </fieldset>
+  </form>
+
+  <div dialog-footer>
+    <button type="button" class="btn-text" (click)="closeCreateTypeDialog()">
+      Cancel
+    </button>
+    <button
+      type="button"
+      class="btn-primary"
+      (click)="onCreateTypeSubmit()"
+    >
+      Save type
+    </button>
+  </div>
+</app-dialog>
+

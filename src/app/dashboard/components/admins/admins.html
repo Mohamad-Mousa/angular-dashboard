@@ -1,0 +1,95 @@
+<div class="card border-0 shadow-sm h-100">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <p class="text-uppercase text-muted fw-semibold small mb-1">Directory</p>
+        <h2 class="h4 mb-0">Administrators</h2>
+      </div>
+      <app-button
+        label="Create Admin"
+        size="sm"
+        variant="primary"
+        icon="add"
+        (click)="openCreateAdminDialog()"
+      ></app-button>
+    </div>
+
+    <app-table
+      [columns]="columns"
+      [rows]="admins"
+      [showActions]="true"
+      [enableFilters]="true"
+      [enableSorting]="true"
+      [loading]="tableLoading"
+      loadingLabel="Updating administrators..."
+    ></app-table>
+  </div>
+</div>
+
+<app-dialog
+  [open]="isCreateDialogOpen"
+  title="Create administrator"
+  description="Define the access level and capabilities for the new admin."
+  (closed)="closeCreateAdminDialog()"
+>
+  <form dialog-body [formGroup]="createAdminForm" class="form-grid">
+    <label>
+      <span>Full name</span>
+      <input type="text" formControlName="name" placeholder="Jane Doe" />
+    </label>
+
+    <label>
+      <span>Role</span>
+      <input
+        type="text"
+        list="admin-role-options"
+        formControlName="role"
+        placeholder="Global Admin"
+      />
+      <datalist id="admin-role-options">
+        @for (role of roleSuggestions; track role) {
+          <option [value]="role"></option>
+        }
+      </datalist>
+    </label>
+
+    <label>
+      <span>Status</span>
+      <select formControlName="status">
+        @for (status of statusOptions; track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+    </label>
+
+    <fieldset class="permissions">
+      <legend>Permissions</legend>
+      <label>
+        <input type="checkbox" formControlName="canRead" />
+        Read access
+      </label>
+      <label>
+        <input type="checkbox" formControlName="canEdit" />
+        Edit access
+      </label>
+      <label>
+        <input type="checkbox" formControlName="canDelete" />
+        Delete access
+      </label>
+    </fieldset>
+  </form>
+
+  <div dialog-footer>
+    <button type="button" class="btn-text" (click)="closeCreateAdminDialog()">
+      Cancel
+    </button>
+    <button
+      type="button"
+      class="btn-primary"
+      (click)="onCreateAdminSubmit()"
+    >
+      Create admin
+    </button>
+  </div>
+</app-dialog>
+

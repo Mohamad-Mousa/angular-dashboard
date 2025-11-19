@@ -1,0 +1,57 @@
+<header class="dashboard-header bg-white shadow-sm rounded-3 p-3 p-md-4 mb-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+  <div class="d-flex align-items-center gap-3 position-relative">
+    <button
+      type="button"
+      class="menu-toggle material-symbols-rounded d-lg-none"
+      (click)="menuToggle.emit()"
+      aria-label="Toggle sidebar"
+    >
+      menu
+    </button>
+    <div class="profile-trigger">
+      <button
+        type="button"
+        class="brand-trigger p-0 border-0 bg-transparent"
+        (click)="toggleProfileMenu($event)"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="isProfileMenuOpen"
+      >
+        <div class="brand-emblem d-flex align-items-center justify-content-center rounded-circle">
+          <span>PD</span>
+        </div>
+      </button>
+
+      @if (isProfileMenuOpen) {
+        <div class="profile-dropdown" role="menu" (click)="onMenuClick($event)">
+          <button type="button" role="menuitem" (click)="goToProfile($event)">
+            Profile
+          </button>
+          <button type="button" role="menuitem" (click)="logout($event)">
+            Logout
+          </button>
+        </div>
+      }
+    </div>
+      <div>
+        <h1 class="h5 mb-1">Admin Console</h1>
+        <p class="text-muted mb-0 small">Monitor activity and manage access</p>
+      </div>
+    </div>
+
+    <ul class="nav nav-pills header-tabs gap-2 flex-wrap mb-0">
+      @for (tab of navTabs; track tab.label) {
+        <li class="nav-item">
+          <a
+            class="nav-link py-2 px-3"
+            [routerLink]="['/dashboard', tab.path]"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: tab.path === 'overview' }"
+          >
+            {{ tab.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </div>
+</header>
