@@ -4,27 +4,20 @@
     <div class="d-flex flex-column flex-md-row gap-4 align-items-center align-items-md-start">
       <div class="avatar-wrapper">
         <div class="avatar">
-          <img
-            [src]="profile.image"
-            [alt]="profile.firstName + ' ' + profile.lastName"
-            class="img-fluid"
-          />
+          <img [src]="profile.image" [alt]="profile.firstName + ' ' + profile.lastName" class="img-fluid" />
         </div>
         <span class="status-pill">Active</span>
       </div>
 
       <div class="flex-grow-1">
-        <header class="d-flex flex-column flex-md-row gap-2 align-items-center align-items-md-start justify-content-between">
+        <header
+          class="d-flex flex-column flex-md-row gap-2 align-items-center align-items-md-start justify-content-between">
           <div>
             <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
               <h2 class="mb-0">
                 {{ profile.firstName }} {{ profile.lastName }}
               </h2>
-              <button
-                type="button"
-                class="edit-btn material-symbols-rounded"
-                (click)="openEditDialog()"
-              >
+              <button type="button" class="edit-btn material-symbols-rounded" (click)="openEditDialog()">
                 edit
               </button>
             </div>
@@ -34,7 +27,7 @@
             </a>
           </div>
           <div class="badge bg-primary-subtle text-primary-emphasis px-3 py-2 rounded-pill text-uppercase fw-semibold">
-            Owner
+            Super Admin
           </div>
         </header>
 
@@ -61,25 +54,14 @@
   </div>
 </section>
 
-<app-dialog
-  [open]="isEditDialogOpen"
-  title="Edit profile"
-  description="Update your personal details for other admins to reference."
-  width="560px"
-  (closed)="closeEditDialog()"
->
+<app-dialog [open]="isEditDialogOpen" title="Edit profile"
+  description="Update your personal details for other admins to reference." width="560px" (closed)="closeEditDialog()">
   <form dialog-body [formGroup]="profileForm" class="profile-form">
     <div class="image-field">
-      <app-image-upload
-        label="Avatar"
-        hint="PNG or JPG up to 5MB"
-        [value]="profileForm.get('image')?.value"
-        (valueChange)="onImageChange($event)"
-        [disabled]="profileForm.disabled"
-        shape="round"
-      ></app-image-upload>
+      <app-image-upload label="Avatar" hint="PNG or JPG up to 5MB" [value]="profileForm.get('image')?.value"
+        (valueChange)="onImageChange($event)" [disabled]="profileForm.disabled" shape="round"></app-image-upload>
       @if (profileForm.get('image')?.invalid && profileForm.get('image')?.touched) {
-        <small class="error-text">Avatar is required.</small>
+      <small class="error-text">Avatar is required.</small>
       }
     </div>
     <label>
@@ -113,4 +95,3 @@
     </button>
   </div>
 </app-dialog>
-

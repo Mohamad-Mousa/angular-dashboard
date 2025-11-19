@@ -1,12 +1,25 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
+import {
+  ApplicationConfig,
+  provideBrowserGlobalErrorListeners,
+  provideZonelessChangeDetection,
+} from '@angular/core';
 import { provideRouter } from '@angular/router';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi,
+} from '@angular/common/http';
 
 import { routes } from './app.routes';
+import { AuthInterceptor } from './shared/interceptors/auth.interceptor';
+import { HttpErrorInterceptor } from './shared/interceptors/error.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideRouter(routes)
-  ]
+    provideRouter(routes),
+    provideHttpClient(withInterceptorsFromDi()),
+    AuthInterceptor,
+    HttpErrorInterceptor,
+  ],
 };
