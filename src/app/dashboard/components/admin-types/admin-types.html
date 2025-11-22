@@ -20,7 +20,7 @@
 </div>
 
 <app-dialog [open]="isCreateDialogOpen" [title]="dialogTitle" [description]="dialogDescription"
-  [buttons]="createDialogButtons" width="720px" (closed)="closeCreateTypeDialog()">
+  width="720px" (closed)="closeCreateTypeDialog()">
   <form dialog-body [formGroup]="createTypeForm" class="form-grid">
     <label class="full-width">
       <span>Type name</span>
@@ -75,10 +75,19 @@
       </div>
     </div>
   </form>
+
+  <div dialog-footer>
+    <app-button label="Cancel" variant="text" [disabled]="createDialogLoading()"
+      (clicked)="closeCreateTypeDialog()"></app-button>
+    <app-button [label]="createButtonLabel" variant="primary-gradient" [loading]="createDialogLoading()"
+      [disabled]="createDialogLoading()" [functionKey]="functionKey"
+      [privilegeAccess]="isEditMode ? PrivilegeAccess.U : PrivilegeAccess.W" (clicked)="onCreateTypeSubmit()">
+    </app-button>
+  </div>
 </app-dialog>
 
 <app-dialog [open]="isDeleteDialogOpen" title="Delete admin type" description="This action cannot be undone."
-  width="460px" [buttons]="deleteDialogButtons" (closed)="closeDeleteDialog()">
+  width="460px" (closed)="closeDeleteDialog()">
   <div dialog-body>
     <div class="d-flex align-items-start gap-3">
       <div class="text-danger">
@@ -96,6 +105,14 @@
         }
       </div>
     </div>
+  </div>
+
+  <div dialog-footer>
+    <app-button label="Cancel" variant="text" [disabled]="deleteDialogLoading()"
+      (clicked)="closeDeleteDialog()"></app-button>
+    <app-button [label]="deleteButtonLabel" variant="danger-gradient" [loading]="deleteDialogLoading()"
+      [disabled]="deleteDialogLoading()" [functionKey]="functionKey" [privilegeAccess]="deletePrivilege"
+      (clicked)="confirmDelete()"></app-button>
   </div>
 </app-dialog>
 

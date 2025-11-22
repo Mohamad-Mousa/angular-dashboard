@@ -1,31 +1,23 @@
 import { Component, EventEmitter, HostListener, Output } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '@shared/services';
 import { Admin } from '@shared/interfaces';
 import { environment } from '../../../../environments/environment';
-
-interface NavTab {
-  label: string;
-  path: string;
-}
+import { DialogComponent } from '@shared/components/dialog/dialog';
+import { ButtonComponent } from '@shared/components/button/button';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [DialogComponent, ButtonComponent],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })
 export class Header {
   @Output() menuToggle = new EventEmitter<void>();
-  protected readonly navTabs: NavTab[] = [
-    { label: 'Home', path: 'overview' },
-    { label: 'Admins', path: 'admins' },
-    { label: 'Admin Types', path: 'admin-types' },
-    { label: 'Settings', path: 'settings' },
-  ];
 
   protected isProfileMenuOpen = false;
+  protected isLogoutDialogOpen = false;
   protected currentAdmin: Admin | undefined;
   protected imageError = false;
 
@@ -70,9 +62,16 @@ export class Header {
     this.router.navigate(['/dashboard', 'profile']);
   }
 
-  protected logout(event?: MouseEvent) {
-    event?.stopPropagation();
-    this.isProfileMenuOpen = false;
+  protected openLogoutDialog() {
+    this.isLogoutDialogOpen = true;
+  }
+
+  protected closeLogoutDialog() {
+    this.isLogoutDialogOpen = false;
+  }
+
+  protected confirmLogout() {
+    this.isLogoutDialogOpen = false;
     this.authService.logout().subscribe({
       next: () => {
         this.router.navigate(['/login']);

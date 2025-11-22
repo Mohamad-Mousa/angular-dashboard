@@ -41,89 +41,28 @@
 
       <div class="nav-grid mt-3">
         @for (tab of navTabs; track tab.label) {
-          @if (!tab.logout) {
-            <a
-              class="nav-tile w-100 text-start"
-              [routerLink]="tab.absolute ? ['/', tab.path] : ['/dashboard', tab.path]"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: true }"
-              #rla="routerLinkActive"
-              [attr.title]="isCollapsed ? tab.label : null"
-              (click)="handleNavSelection()"
-            >
-              <span class="material-symbols-rounded nav-icon" [class.active]="rla.isActive">
-                {{ tab.icon }}
-              </span>
-              @if (!isCollapsed) {
-                <div class="nav-copy flex-grow-1">
-                  <p class="mb-1 fw-bold">{{ tab.label }}</p>
-                  <small class="text-muted">{{ tab.description }}</small>
-                </div>
-                <span class="chevron ms-auto">&rsaquo;</span>
-              }
-            </a>
-          } @else {
-            <button
-              type="button"
-              class="nav-tile w-100 text-start logout-tile"
-              (click)="openLogoutDialog(); handleNavSelection()"
-              [attr.title]="isCollapsed ? tab.label : null"
-            >
-              <span class="material-symbols-rounded nav-icon">
-                {{ tab.icon }}
-              </span>
-              @if (!isCollapsed) {
-                <div class="nav-copy flex-grow-1 text-start">
-                  <p class="mb-1 fw-bold">{{ tab.label }}</p>
-                  <small class="text-muted">{{ tab.description }}</small>
-                </div>
-                <span class="chevron ms-auto material-symbols-rounded">logout</span>
-              }
-            </button>
-          }
+          <a
+            class="nav-tile w-100 text-start"
+            [routerLink]="tab.absolute ? ['/', tab.path] : ['/dashboard', tab.path]"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            #rla="routerLinkActive"
+            [attr.title]="isCollapsed ? tab.label : null"
+            (click)="handleNavSelection()"
+          >
+            <span class="material-symbols-rounded nav-icon" [class.active]="rla.isActive">
+              {{ tab.icon }}
+            </span>
+            @if (!isCollapsed) {
+              <div class="nav-copy flex-grow-1">
+                <p class="mb-1 fw-bold">{{ tab.label }}</p>
+                <small class="text-muted">{{ tab.description }}</small>
+              </div>
+              <span class="chevron ms-auto">&rsaquo;</span>
+            }
+          </a>
         }
       </div>
     </div>
-
-    @if (!isCollapsed) {
-      <div class="settings-card mt-auto">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <div>
-            <p class="text-uppercase text-muted fw-semibold small mb-1">Settings tab</p>
-            <h3 class="h5 mb-0">Fine-tune access</h3>
-          </div>
-          <span class="settings-icon rounded-circle d-flex align-items-center justify-content-center">
-            ⚙️
-          </span>
-        </div>
-        <p class="text-muted small mb-3">
-          Configure security defaults, notification policies, and escalation flows directly from the Settings tab.
-        </p>
-        <a class="btn btn-primary btn-sm w-100" [routerLink]="['/dashboard', 'settings']">Open Settings</a>
-      </div>
-    }
   </div>
 </aside>
-
-<app-dialog
-  [open]="isLogoutDialogOpen"
-  title="Sign out"
-  description="You will be redirected to the login page. Ongoing changes that aren’t saved will be lost."
-  width="460px"
-  (closed)="closeLogoutDialog()"
->
-  <div dialog-body class="logout-warning">
-    <div class="warning-icon material-symbols-rounded p-2">warning</div>
-    <div>
-      <p class="fw-semibold mb-1">Are you sure you want to logout?</p>
-      <p class="text-muted mb-0">
-        Make sure any pending admin or type changes are saved before you exit the dashboard.
-      </p>
-    </div>
-  </div>
-
-  <div dialog-footer>
-    <button type="button" class="btn-text" (click)="closeLogoutDialog()">Stay</button>
-    <button type="button" class="btn-danger" (click)="confirmLogout()">Logout</button>
-  </div>
-</app-dialog>

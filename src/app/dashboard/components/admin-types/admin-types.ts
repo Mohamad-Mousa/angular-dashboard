@@ -14,10 +14,7 @@ import {
   TableColumn,
 } from '../../../shared/components/table/table';
 import { ButtonComponent } from '../../../shared/components/button/button';
-import {
-  DialogComponent,
-  DialogButton,
-} from '../../../shared/components/dialog/dialog';
+import { DialogComponent } from '../../../shared/components/dialog/dialog';
 import { NotificationService } from '../../../shared/components/notification/notification.service';
 import {
   SidebarComponent,
@@ -91,6 +88,7 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
   protected readonly functionKey = 'adminTypes';
   protected readonly writePrivilege = PrivilegeAccess.W;
   protected readonly deletePrivilege = PrivilegeAccess.D;
+  protected readonly PrivilegeAccess = PrivilegeAccess;
   protected readonly Functions = Functions;
   protected readonly FunctionKeys = FunctionKeys;
   protected readonly functionKeysArray = Object.values(FunctionKeys);
@@ -291,68 +289,15 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
       : 'Group permissions into reusable admin roles.';
   }
 
-  protected get submitButtonLabel(): string {
-    return this.isEditMode ? 'Update type' : 'Create type';
-  }
-
   protected get createButtonLabel(): string {
-    const isLoading = this.createDialogLoading();
-    if (isLoading) {
+    if (this.createDialogLoading()) {
       return this.isEditMode ? 'Updating...' : 'Creating...';
     }
-    return this.submitButtonLabel;
-  }
-
-  protected get createDialogButtons(): DialogButton[] {
-    const isLoading = this.createDialogLoading();
-    return [
-      {
-        label: 'Cancel',
-        variant: 'ghost',
-        size: 'sm',
-        disabled: isLoading,
-        action: () => this.closeCreateTypeDialog(),
-      },
-      {
-        label: this.createButtonLabel,
-        variant: 'primary',
-        size: 'sm',
-        functionKey: this.functionKey,
-        privilegeAccess: this.isEditMode
-          ? PrivilegeAccess.U
-          : PrivilegeAccess.W,
-        loading: isLoading,
-        disabled: isLoading,
-        action: () => this.onCreateTypeSubmit(),
-      },
-    ];
+    return this.isEditMode ? 'Update type' : 'Create type';
   }
 
   protected get deleteButtonLabel(): string {
     return this.deleteDialogLoading() ? 'Deleting...' : 'Delete';
-  }
-
-  protected get deleteDialogButtons(): DialogButton[] {
-    const isLoading = this.deleteDialogLoading();
-    return [
-      {
-        label: 'Cancel',
-        variant: 'ghost',
-        size: 'sm',
-        disabled: isLoading,
-        action: () => this.closeDeleteDialog(),
-      },
-      {
-        label: this.deleteButtonLabel,
-        variant: 'danger',
-        size: 'sm',
-        functionKey: this.functionKey,
-        privilegeAccess: this.deletePrivilege,
-        loading: isLoading,
-        disabled: isLoading,
-        action: () => this.confirmDelete(),
-      },
-    ];
   }
 
   protected openCreateTypeDialog() {

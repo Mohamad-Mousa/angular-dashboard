@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { DialogComponent } from '../../../shared/components/dialog/dialog';
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload';
+import { ButtonComponent } from '../../../shared/components/button/button';
 import { AuthService, AdminService } from '../../../shared/services';
 import { NotificationService } from '../../../shared/components/notification/notification.service';
 import { Admin } from '../../../shared/interfaces';
@@ -21,6 +22,7 @@ import { environment } from '../../../../environments/environment';
     ReactiveFormsModule,
     DialogComponent,
     ImageUploadComponent,
+    ButtonComponent,
   ],
   templateUrl: './profile.html',
   styleUrls: ['./profile.scss'],
@@ -44,8 +46,6 @@ export class ProfileComponent implements OnInit {
       lastName: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
       image: [''],
-      title: [''],
-      bio: [''],
     });
   }
 
@@ -62,8 +62,6 @@ export class ProfileComponent implements OnInit {
         lastName: currentUser.lastName || '',
         email: currentUser.email || '',
         image: currentUser.image || '',
-        title: currentUser['title'] || '',
-        bio: currentUser['bio'] || '',
       });
     }
   }
@@ -92,6 +90,25 @@ export class ProfileComponent implements OnInit {
     return environment.IMG_URL + admin.image;
   }
 
+  protected get saveButtonLabel(): string {
+    return this.isSaving() ? 'Saving...' : 'Save changes';
+  }
+
+  protected getImageUploadValue(): string | undefined {
+    const formImageValue = this.profileForm.get('image')?.value;
+    if (!formImageValue) return undefined;
+
+    if (formImageValue.startsWith('http')) {
+      return formImageValue;
+    }
+
+    if (formImageValue.startsWith('data:')) {
+      return formImageValue;
+    }
+
+    return environment.IMG_URL + formImageValue;
+  }
+
   protected openEditDialog() {
     const admin = this.profile();
     if (admin) {
@@ -100,8 +117,6 @@ export class ProfileComponent implements OnInit {
         lastName: admin.lastName || '',
         email: admin.email || '',
         image: admin.image || '',
-        title: admin['title'] || '',
-        bio: admin['bio'] || '',
       });
     }
     this.isEditDialogOpen = true;
@@ -124,6 +139,9 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
+    const originalType = admin.type;
+    const originalIsActive = admin.isActive;
+
     this.isSaving.set(true);
 
     const updateData: Partial<Admin> = {
@@ -131,21 +149,41 @@ export class ProfileComponent implements OnInit {
       firstName: this.profileForm.value.firstName,
       lastName: this.profileForm.value.lastName,
       email: this.profileForm.value.email,
-      title: this.profileForm.value.title || undefined,
-      bio: this.profileForm.value.bio || undefined,
     };
 
-    // Only include image if it's a new file or URL
     if (this.selectedImageFile) {
-      // Image file will be handled separately
-    } else if (this.profileForm.value.image) {
-      updateData.image = this.profileForm.value.image;
+    } else if (
+      this.profileForm.value.image &&
+      !this.profileForm.value.image.startsWith('data:')
+    ) {
+      const imageValue = this.profileForm.value.image;
+      if (imageValue.startsWith(environment.IMG_URL)) {
+        updateData.image = imageValue.replace(environment.IMG_URL, '');
+      } else {
+        updateData.image = imageValue;
+      }
     }
 
     this.adminService.update(updateData, this.selectedImageFile).subscribe({
       next: (updatedAdmin) => {
-        this.profile.set(updatedAdmin);
-        this.authService.setCurrentUser(updatedAdmin);
+        const finalAdmin: Admin = {
+          ...updatedAdmin,
+          type: originalType || updatedAdmin.type,
+          isActive:
+            originalIsActive !== undefined
+              ? originalIsActive
+              : updatedAdmin.isActive,
+        };
+
+        this.profile.set(finalAdmin);
+        this.authService.setCurrentUser(finalAdmin);
+
+        if (finalAdmin.image) {
+          this.profileForm.patchValue({
+            image: finalAdmin.image,
+          });
+        }
+
         this.isEditDialogOpen = false;
         this.selectedImageFile = undefined;
         this.isSaving.set(false);

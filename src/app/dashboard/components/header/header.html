@@ -23,9 +23,6 @@
           <button type="button" role="menuitem" (click)="goToProfile($event)">
             Profile
           </button>
-          <button type="button" role="menuitem" (click)="logout($event)">
-            Logout
-          </button>
         </div>
         }
       </div>
@@ -35,15 +32,28 @@
       </div>
     </div>
 
-    <ul class="nav nav-pills header-tabs gap-2 flex-wrap mb-0">
-      @for (tab of navTabs; track tab.label) {
-      <li class="nav-item">
-        <a class="nav-link py-2 px-3" [routerLink]="['/dashboard', tab.path]" routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: tab.path === 'overview' }">
-          {{ tab.label }}
-        </a>
-      </li>
-      }
-    </ul>
+    <button type="button" class="logout-button material-symbols-rounded" (click)="openLogoutDialog()"
+      aria-label="Logout" title="Logout">
+      power_settings_new
+    </button>
   </div>
 </header>
+
+<app-dialog [open]="isLogoutDialogOpen" title="Sign out"
+  description="You will be redirected to the login page. Ongoing changes that aren't saved will be lost." width="460px"
+  (closed)="closeLogoutDialog()">
+  <div dialog-body class="logout-warning">
+    <div class="warning-icon material-symbols-rounded p-2">warning</div>
+    <div>
+      <p class="fw-semibold mb-1">Are you sure you want to logout?</p>
+      <p class="text-muted mb-0">
+        Make sure any pending admin or type changes are saved before you exit the dashboard.
+      </p>
+    </div>
+  </div>
+
+  <div dialog-footer>
+    <app-button label="Stay" variant="text" (clicked)="closeLogoutDialog()"></app-button>
+    <app-button label="Logout" variant="danger-gradient" (clicked)="confirmLogout()"></app-button>
+  </div>
+</app-dialog>

@@ -23,7 +23,6 @@ import {
 import { AdminService, AdminTypeService } from '../../../shared/services';
 import { Admin, AdminType } from '../../../shared/interfaces';
 import { PrivilegeAccess } from '../../../shared/enums';
-import { DialogButton } from '../../../shared/components/dialog/dialog';
 import {
   FormInputComponent,
   SelectOption,
@@ -92,6 +91,7 @@ export class AdminsComponent implements OnInit, OnDestroy {
   protected readonly functionKey = 'admins';
   protected readonly writePrivilege = PrivilegeAccess.W;
   protected readonly deletePrivilege = PrivilegeAccess.D;
+  protected readonly PrivilegeAccess = PrivilegeAccess;
 
   protected isCreateDialogOpen = false;
   protected createAdminForm: FormGroup;
@@ -246,7 +246,6 @@ export class AdminsComponent implements OnInit, OnDestroy {
   }
 
   protected onSearchChange(searchTerm: string): void {
-    // Reset to first page when search changes
     this.loadAdmins(
       1,
       this.currentLimit,
@@ -324,68 +323,15 @@ export class AdminsComponent implements OnInit, OnDestroy {
       : 'Add a new administrator to the system.';
   }
 
-  protected get submitButtonLabel(): string {
-    return this.isEditMode ? 'Update admin' : 'Create admin';
-  }
-
   protected get createButtonLabel(): string {
-    const isLoading = this.createDialogLoading();
-    if (isLoading) {
+    if (this.createDialogLoading()) {
       return this.isEditMode ? 'Updating...' : 'Creating...';
     }
-    return this.submitButtonLabel;
-  }
-
-  protected get createDialogButtons(): DialogButton[] {
-    const isLoading = this.createDialogLoading();
-    return [
-      {
-        label: 'Cancel',
-        variant: 'ghost',
-        size: 'sm',
-        disabled: isLoading,
-        action: () => this.closeCreateAdminDialog(),
-      },
-      {
-        label: this.createButtonLabel,
-        variant: 'primary',
-        size: 'sm',
-        functionKey: this.functionKey,
-        privilegeAccess: this.isEditMode
-          ? PrivilegeAccess.U
-          : PrivilegeAccess.W,
-        loading: isLoading,
-        disabled: isLoading,
-        action: () => this.onCreateAdminSubmit(),
-      },
-    ];
+    return this.isEditMode ? 'Update admin' : 'Create admin';
   }
 
   protected get deleteButtonLabel(): string {
     return this.deleteDialogLoading() ? 'Deleting...' : 'Delete';
-  }
-
-  protected get deleteDialogButtons(): DialogButton[] {
-    const isLoading = this.deleteDialogLoading();
-    return [
-      {
-        label: 'Cancel',
-        variant: 'ghost',
-        size: 'sm',
-        disabled: isLoading,
-        action: () => this.closeDeleteDialog(),
-      },
-      {
-        label: this.deleteButtonLabel,
-        variant: 'danger',
-        size: 'sm',
-        functionKey: this.functionKey,
-        privilegeAccess: this.deletePrivilege,
-        loading: isLoading,
-        disabled: isLoading,
-        action: () => this.confirmDelete(),
-      },
-    ];
   }
 
   protected openCreateAdminDialog() {

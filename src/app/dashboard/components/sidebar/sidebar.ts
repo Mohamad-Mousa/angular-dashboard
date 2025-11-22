@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { DialogComponent } from '../../../shared/components/dialog/dialog';
 import { AuthService } from '@shared/services';
 import { PrivilegeAccess } from '@shared/enums';
 
@@ -17,13 +16,12 @@ interface NavTab {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, DialogComponent],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
 export class Sidebar {
   protected isCollapsed = false;
-  protected isLogoutDialogOpen = false;
   @Output() collapsedChange = new EventEmitter<boolean>();
   @Input() mobileOpen = false;
   @Output() mobileOpenChange = new EventEmitter<boolean>();
@@ -64,21 +62,10 @@ export class Sidebar {
       icon: 'settings',
       functionKey: 'settings',
     },
-    {
-      label: 'Logout',
-      description: 'Sign out and return to login',
-      path: 'login',
-      icon: 'logout',
-      absolute: true,
-      logout: true,
-    },
   ];
 
   protected get navTabs(): NavTab[] {
     return this.allNavTabs.filter((tab) => {
-      if (tab.logout) {
-        return true;
-      }
       if (tab.functionKey) {
         return this.authService.hasPrivilege(
           tab.functionKey,
@@ -104,27 +91,5 @@ export class Sidebar {
 
   protected handleNavSelection() {
     this.closeMobilePanel();
-  }
-
-  protected openLogoutDialog() {
-    this.isLogoutDialogOpen = true;
-  }
-
-  protected closeLogoutDialog() {
-    this.isLogoutDialogOpen = false;
-  }
-
-  protected confirmLogout() {
-    this.isLogoutDialogOpen = false;
-    this.authService.logout().subscribe({
-      next: () => {
-        this.router.navigate(['/login']);
-        this.closeMobilePanel();
-      },
-      error: () => {
-        this.router.navigate(['/login']);
-        this.closeMobilePanel();
-      },
-    });
   }
 }

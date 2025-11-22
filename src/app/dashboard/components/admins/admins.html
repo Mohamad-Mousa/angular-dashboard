@@ -13,64 +13,34 @@
       [enableFilters]="true" [enableSorting]="true" [enablePagination]="true" [loading]="tableLoading()"
       loadingLabel="Loading administrators..." [functionKey]="functionKey" [excludedActions]="excludedActions"
       [serverSideSearch]="true" [serverSideFilters]="true" [sortBy]="sortBy" [sortDirection]="sortDirection"
-      (pageChange)="onPageChange($event)" (limitChange)="onLimitChange($event)"
-      (searchChange)="onSearchChange($event)" (filterChange)="onFilterChange($event)"
-      (sortChange)="onSortChange($event)" (readAction)="onRead($event)" (updateAction)="onUpdate($event)"
-      (deleteAction)="onDelete($event)"></app-table>
+      (pageChange)="onPageChange($event)" (limitChange)="onLimitChange($event)" (searchChange)="onSearchChange($event)"
+      (filterChange)="onFilterChange($event)" (sortChange)="onSortChange($event)" (readAction)="onRead($event)"
+      (updateAction)="onUpdate($event)" (deleteAction)="onDelete($event)"></app-table>
   </div>
 </div>
 
 <app-dialog [open]="isCreateDialogOpen" [title]="dialogTitle" [description]="dialogDescription"
-  [buttons]="createDialogButtons" (closed)="closeCreateAdminDialog()">
+  (closed)="closeCreateAdminDialog()">
   <form dialog-body [formGroup]="createAdminForm" class="form-grid">
-    <app-form-input
-      [control]="emailControl"
-      formControlName="email"
-      label="Email"
-      type="email"
-      placeholder="admin@gmail.com"
-      [required]="true">
+    <app-form-input [control]="emailControl" formControlName="email" label="Email" type="email"
+      placeholder="admin@gmail.com" [required]="true">
     </app-form-input>
 
-    <app-form-input
-      [control]="firstNameControl"
-      formControlName="firstName"
-      label="First Name"
-      type="text"
-      placeholder="John"
-      [required]="true"
-      [minlength]="2">
+    <app-form-input [control]="firstNameControl" formControlName="firstName" label="First Name" type="text"
+      placeholder="John" [required]="true" [minlength]="2">
     </app-form-input>
 
-    <app-form-input
-      [control]="lastNameControl"
-      formControlName="lastName"
-      label="Last Name"
-      type="text"
-      placeholder="Doe"
-      [required]="true"
-      [minlength]="2">
+    <app-form-input [control]="lastNameControl" formControlName="lastName" label="Last Name" type="text"
+      placeholder="Doe" [required]="true" [minlength]="2">
     </app-form-input>
 
-    <app-form-input
-      [control]="passwordControl"
-      formControlName="password"
-      label="Password"
-      type="password"
-      [placeholder]="isEditMode ? 'Leave blank to keep current password' : 'Enter password'"
-      [required]="!isEditMode"
-      [minlength]="6"
-      hint="Minimum 6 characters">
+    <app-form-input [control]="passwordControl" formControlName="password" label="Password" type="password"
+      [placeholder]="isEditMode ? 'Leave blank to keep current password' : 'Enter password'" [required]="!isEditMode"
+      [minlength]="6" hint="Minimum 6 characters">
     </app-form-input>
 
-    <app-form-input
-      [control]="typeControl"
-      formControlName="type"
-      label="Type"
-      type="select"
-      placeholder="Select admin type"
-      [options]="adminTypeOptions"
-      [required]="true">
+    <app-form-input [control]="typeControl" formControlName="type" label="Type" type="select"
+      placeholder="Select admin type" [options]="adminTypeOptions" [required]="true">
     </app-form-input>
 
     <div class="image-field">
@@ -80,10 +50,19 @@
       </app-image-upload>
     </div>
   </form>
+
+  <div dialog-footer>
+    <app-button label="Cancel" variant="text" [disabled]="createDialogLoading()"
+      (clicked)="closeCreateAdminDialog()"></app-button>
+    <app-button [label]="createButtonLabel" variant="primary-gradient" [loading]="createDialogLoading()"
+      [disabled]="createDialogLoading()" [functionKey]="functionKey"
+      [privilegeAccess]="isEditMode ? PrivilegeAccess.U : PrivilegeAccess.W" (clicked)="onCreateAdminSubmit()">
+    </app-button>
+  </div>
 </app-dialog>
 
 <app-dialog [open]="isDeleteDialogOpen" title="Delete administrator" description="This action cannot be undone."
-  width="460px" [buttons]="deleteDialogButtons" (closed)="closeDeleteDialog()">
+  width="460px" (closed)="closeDeleteDialog()">
   <div dialog-body>
     <div class="d-flex align-items-start gap-3">
       <div class="text-danger">
@@ -99,6 +78,14 @@
         }
       </div>
     </div>
+  </div>
+
+  <div dialog-footer>
+    <app-button label="Cancel" variant="text" [disabled]="deleteDialogLoading()"
+      (clicked)="closeDeleteDialog()"></app-button>
+    <app-button [label]="deleteButtonLabel" variant="danger-gradient" [loading]="deleteDialogLoading()"
+      [disabled]="deleteDialogLoading()" [functionKey]="functionKey" [privilegeAccess]="deletePrivilege"
+      (clicked)="confirmDelete()"></app-button>
   </div>
 </app-dialog>
 

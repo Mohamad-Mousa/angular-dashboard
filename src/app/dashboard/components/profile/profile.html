@@ -29,9 +29,6 @@
                 edit
               </button>
             </div>
-            @if (currentProfile['title']) {
-            <p class="text-muted mb-2">{{ currentProfile['title'] }}</p>
-            }
             <a class="email-link" [href]="'mailto:' + currentProfile.email">
               {{ currentProfile.email }}
             </a>
@@ -40,12 +37,6 @@
             {{ adminTypeName }}
           </div>
         </header>
-
-        @if (currentProfile['bio']) {
-        <p class="profile-bio mt-3 mb-4">
-          {{ currentProfile['bio'] }}
-        </p>
-        }
 
         <div class="info-grid">
           <div>
@@ -79,7 +70,7 @@
   description="Update your personal details for other admins to reference." width="560px" (closed)="closeEditDialog()">
   <form dialog-body [formGroup]="profileForm" class="profile-form">
     <div class="image-field">
-      <app-image-upload label="Avatar" hint="PNG or JPG up to 5MB" [value]="profileForm.get('image')?.value"
+      <app-image-upload label="Avatar" hint="PNG or JPG up to 5MB" [value]="getImageUploadValue()"
         (valueChange)="onImageChange($event)" (fileSelected)="onImageFileSelected($event)"
         [disabled]="profileForm.disabled || isSaving()" shape="round"></app-image-upload>
     </div>
@@ -95,26 +86,11 @@
       <span>Email</span>
       <input type="email" formControlName="email" />
     </label>
-    <label>
-      <span>Title</span>
-      <input type="text" formControlName="title" />
-    </label>
-    <label>
-      <span>Bio</span>
-      <textarea rows="3" formControlName="bio"></textarea>
-    </label>
   </form>
 
   <div dialog-footer>
-    <button type="button" class="btn-text" (click)="closeEditDialog()" [disabled]="isSaving()">
-      Cancel
-    </button>
-    <button type="button" class="btn-primary" (click)="saveProfile()" [disabled]="isSaving()">
-      @if (isSaving()) {
-      Saving...
-      } @else {
-      Save changes
-      }
-    </button>
+    <app-button label="Cancel" variant="text" [disabled]="isSaving()" (clicked)="closeEditDialog()"></app-button>
+    <app-button [label]="saveButtonLabel" variant="primary-gradient" [loading]="isSaving()" [disabled]="isSaving()"
+      (clicked)="saveProfile()"></app-button>
   </div>
 </app-dialog>

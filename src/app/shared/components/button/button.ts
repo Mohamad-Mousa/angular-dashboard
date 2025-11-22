@@ -10,7 +10,10 @@ type ButtonVariant =
   | 'warning'
   | 'danger'
   | 'outline'
-  | 'ghost';
+  | 'ghost'
+  | 'text'
+  | 'primary-gradient'
+  | 'danger-gradient';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 @Component({
@@ -35,11 +38,29 @@ export class ButtonComponent {
   @Output() clicked = new EventEmitter<MouseEvent>();
 
   protected get hostClasses(): string[] {
-    return [
-      'btn',
-      `btn-${this.variantMap[this.variant] ?? 'primary'}`,
-      this.sizeClassMap[this.size] ?? '',
-    ].filter(Boolean);
+    const classes: string[] = [];
+    
+    // For gradient variants, use custom classes instead of Bootstrap classes
+    if (this.variant === 'text') {
+      classes.push('btn-text');
+    } else if (this.variant === 'primary-gradient') {
+      classes.push('btn-primary');
+    } else if (this.variant === 'danger-gradient') {
+      classes.push('btn-danger');
+    } else {
+      // Use Bootstrap classes for other variants
+      classes.push('btn', `btn-${this.variantMap[this.variant] ?? 'primary'}`);
+    }
+    
+    // Add size class only for Bootstrap variants
+    if (this.variant !== 'text' && this.variant !== 'primary-gradient' && this.variant !== 'danger-gradient') {
+      const sizeClass = this.sizeClassMap[this.size];
+      if (sizeClass) {
+        classes.push(sizeClass);
+      }
+    }
+    
+    return classes.filter(Boolean);
   }
 
   private readonly variantMap: Record<ButtonVariant, string> = {
@@ -49,6 +70,9 @@ export class ButtonComponent {
     danger: 'danger',
     outline: 'outline-secondary',
     ghost: 'link',
+    'text': 'text',
+    'primary-gradient': 'primary',
+    'danger-gradient': 'danger',
   };
 
   private readonly sizeClassMap: Record<ButtonSize, string> = {
