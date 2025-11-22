@@ -19,7 +19,10 @@ export const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        redirectTo: 'overview',
+        loadComponent: () =>
+          import(
+            './dashboard/components/dashboard-redirect/dashboard-redirect'
+          ).then((m) => m.DashboardRedirectComponent),
       },
       {
         path: 'overview',
@@ -27,6 +30,7 @@ export const routes: Routes = [
           import('./dashboard/components/overview/overview').then(
             (m) => m.OverviewComponent
           ),
+        canActivate: [privilegeGuard('dashboard', PrivilegeAccess.R)],
       },
       {
         path: 'admins',

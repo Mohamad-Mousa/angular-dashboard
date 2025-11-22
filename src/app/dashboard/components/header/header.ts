@@ -1,6 +1,8 @@
 import { Component, EventEmitter, HostListener, Output } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '@shared/services';
+import { Admin } from '@shared/interfaces';
+import { environment } from '../../../../environments/environment';
 
 interface NavTab {
   label: string;
@@ -24,8 +26,34 @@ export class Header {
   ];
 
   protected isProfileMenuOpen = false;
+  protected currentAdmin: Admin | undefined;
+  protected imageError = false;
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(private router: Router, private authService: AuthService) {
+    this.currentAdmin = this.authService.getCurrentUser();
+  }
+
+  protected getAdminInitials(): string {
+    if (!this.currentAdmin) return 'PD';
+    const firstInitial =
+      this.currentAdmin.firstName?.charAt(0)?.toUpperCase() || '';
+    const lastInitial =
+      this.currentAdmin.lastName?.charAt(0)?.toUpperCase() || '';
+    return firstInitial + lastInitial || 'PD';
+  }
+
+  protected getAdminImage(): string | undefined {
+    if (!this.currentAdmin?.image) return undefined;
+    return environment.IMG_URL + this.currentAdmin.image;
+  }
+
+  protected onImageError() {
+    this.imageError = true;
+  }
+
+  protected shouldShowImage(): boolean {
+    return !!(this.getAdminImage() && !this.imageError);
+  }
 
   protected toggleProfileMenu(event: MouseEvent) {
     event.stopPropagation();

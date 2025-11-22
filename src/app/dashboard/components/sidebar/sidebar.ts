@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { DialogComponent } from '../../../shared/components/dialog/dialog';
 import { AuthService } from '@shared/services';
+import { PrivilegeAccess } from '@shared/enums';
 
 interface NavTab {
   label: string;
@@ -10,6 +11,7 @@ interface NavTab {
   path: string;
   absolute?: boolean;
   logout?: boolean;
+  functionKey?: string;
 }
 
 @Component({
@@ -26,30 +28,34 @@ export class Sidebar {
   @Input() mobileOpen = false;
   @Output() mobileOpenChange = new EventEmitter<boolean>();
 
-  protected readonly navTabs: NavTab[] = [
+  protected readonly allNavTabs: NavTab[] = [
     {
       label: 'Home',
       description: 'Realtime summary of all admins',
       path: 'overview',
       icon: 'home',
+      functionKey: 'dashboard',
     },
     {
       label: 'Admins',
       description: 'View and onboard new admins',
       path: 'admins',
       icon: 'groups',
+      functionKey: 'admins',
     },
     {
       label: 'Admin Types',
       description: 'Configure policies by role',
       path: 'admin-types',
       icon: 'badge',
+      functionKey: 'adminTypes',
     },
     {
       label: 'Settings',
       description: 'Audit logs and preferences',
       path: 'settings',
       icon: 'settings',
+      functionKey: 'settings',
     },
     {
       label: 'Logout',
@@ -60,6 +66,21 @@ export class Sidebar {
       logout: true,
     },
   ];
+
+  protected get navTabs(): NavTab[] {
+    return this.allNavTabs.filter((tab) => {
+      if (tab.logout) {
+        return true;
+      }
+      if (tab.functionKey) {
+        return this.authService.hasPrivilege(
+          tab.functionKey,
+          PrivilegeAccess.R
+        );
+      }
+      return true;
+    });
+  }
 
   constructor(private router: Router, private authService: AuthService) {}
 

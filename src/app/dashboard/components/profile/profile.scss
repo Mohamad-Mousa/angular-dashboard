@@ -35,6 +35,19 @@
   height: 100%;
 }
 
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(120deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 3rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
 .status-pill {
   position: absolute;
   bottom: -12px;
@@ -45,6 +58,11 @@
   padding: 0.15rem 0.75rem;
   border-radius: 999px;
   box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+}
+
+.status-pill.inactive {
+  background: #94a3b8;
+  box-shadow: 0 8px 20px rgba(148, 163, 184, 0.3);
 }
 
 .email-link {

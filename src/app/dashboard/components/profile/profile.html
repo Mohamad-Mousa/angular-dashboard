@@ -1,12 +1,20 @@
+@if (profile(); as currentProfile) {
 <section class="profile-view card border-0 shadow-sm">
   <div class="profile-cover"></div>
   <div class="profile-body p-4 p-md-5">
     <div class="d-flex flex-column flex-md-row gap-4 align-items-center align-items-md-start">
       <div class="avatar-wrapper">
         <div class="avatar">
-          <img [src]="profile.image" [alt]="profile.firstName + ' ' + profile.lastName" class="img-fluid" />
+          @if (getProfileImage()) {
+          <img [src]="getProfileImage()"
+            [alt]="(currentProfile.firstName || '') + ' ' + (currentProfile.lastName || '')" class="img-fluid" />
+          } @else {
+          <div class="avatar-placeholder">{{ initials }}</div>
+          }
         </div>
-        <span class="status-pill">Active</span>
+        <span class="status-pill" [class.inactive]="!isActive">
+          {{ isActive ? 'Active' : 'Inactive' }}
+        </span>
       </div>
 
       <div class="flex-grow-1">
@@ -15,54 +23,65 @@
           <div>
             <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
               <h2 class="mb-0">
-                {{ profile.firstName }} {{ profile.lastName }}
+                {{ currentProfile.firstName }} {{ currentProfile.lastName }}
               </h2>
               <button type="button" class="edit-btn material-symbols-rounded" (click)="openEditDialog()">
                 edit
               </button>
             </div>
-            <p class="text-muted mb-2">{{ profile.title }}</p>
-            <a class="email-link" [href]="'mailto:' + profile.email">
-              {{ profile.email }}
+            @if (currentProfile['title']) {
+            <p class="text-muted mb-2">{{ currentProfile['title'] }}</p>
+            }
+            <a class="email-link" [href]="'mailto:' + currentProfile.email">
+              {{ currentProfile.email }}
             </a>
           </div>
           <div class="badge bg-primary-subtle text-primary-emphasis px-3 py-2 rounded-pill text-uppercase fw-semibold">
-            Super Admin
+            {{ adminTypeName }}
           </div>
         </header>
 
+        @if (currentProfile['bio']) {
         <p class="profile-bio mt-3 mb-4">
-          {{ profile.bio }}
+          {{ currentProfile['bio'] }}
         </p>
+        }
 
         <div class="info-grid">
           <div>
             <p class="label">First name</p>
-            <p class="value">{{ profile.firstName }}</p>
+            <p class="value">{{ currentProfile.firstName }}</p>
           </div>
           <div>
             <p class="label">Last name</p>
-            <p class="value">{{ profile.lastName }}</p>
+            <p class="value">{{ currentProfile.lastName }}</p>
           </div>
           <div>
             <p class="label">Email</p>
-            <p class="value">{{ profile.email }}</p>
+            <p class="value">{{ currentProfile.email }}</p>
           </div>
         </div>
       </div>
     </div>
   </div>
 </section>
+} @else {
+<section class="profile-view card border-0 shadow-sm">
+  <div class="profile-body p-4 p-md-5">
+    <div class="text-center py-5">
+      <p class="text-muted">Loading profile...</p>
+    </div>
+  </div>
+</section>
+}
 
 <app-dialog [open]="isEditDialogOpen" title="Edit profile"
   description="Update your personal details for other admins to reference." width="560px" (closed)="closeEditDialog()">
   <form dialog-body [formGroup]="profileForm" class="profile-form">
     <div class="image-field">
       <app-image-upload label="Avatar" hint="PNG or JPG up to 5MB" [value]="profileForm.get('image')?.value"
-        (valueChange)="onImageChange($event)" [disabled]="profileForm.disabled" shape="round"></app-image-upload>
-      @if (profileForm.get('image')?.invalid && profileForm.get('image')?.touched) {
-      <small class="error-text">Avatar is required.</small>
-      }
+        (valueChange)="onImageChange($event)" (fileSelected)="onImageFileSelected($event)"
+        [disabled]="profileForm.disabled || isSaving()" shape="round"></app-image-upload>
     </div>
     <label>
       <span>First name</span>
@@ -87,11 +106,15 @@
   </form>
 
   <div dialog-footer>
-    <button type="button" class="btn-text" (click)="closeEditDialog()">
+    <button type="button" class="btn-text" (click)="closeEditDialog()" [disabled]="isSaving()">
       Cancel
     </button>
-    <button type="button" class="btn-primary" (click)="saveProfile()">
+    <button type="button" class="btn-primary" (click)="saveProfile()" [disabled]="isSaving()">
+      @if (isSaving()) {
+      Saving...
+      } @else {
       Save changes
+      }
     </button>
   </div>
 </app-dialog>

@@ -22,7 +22,8 @@ export const privilegeGuard = (
       return true;
     }
 
-    router.navigate(['/dashboard/overview']);
+    const firstAccessibleRoute = authService.getFirstAccessibleRoute();
+    router.navigate(['/dashboard', firstAccessibleRoute]);
     return false;
   };
 };

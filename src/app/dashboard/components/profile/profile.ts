@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -8,15 +8,10 @@ import {
 } from '@angular/forms';
 import { DialogComponent } from '../../../shared/components/dialog/dialog';
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload';
-
-interface Profile {
-  firstName: string;
-  lastName: string;
-  email: string;
-  image: string;
-  title: string;
-  bio: string;
-}
+import { AuthService, AdminService } from '../../../shared/services';
+import { NotificationService } from '../../../shared/components/notification/notification.service';
+import { Admin } from '../../../shared/interfaces';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -30,42 +25,91 @@ interface Profile {
   templateUrl: './profile.html',
   styleUrls: ['./profile.scss'],
 })
-export class ProfileComponent {
-  protected profile: Profile = {
-    firstName: 'Amelia',
-    lastName: 'Carter',
-    email: 'amelia.carter@phd-labs.com',
-    image:
-      'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=500&q=80',
-    title: 'Global Admin',
-    bio: 'Drives access policy strategy and reviews weekly compliance signals.',
-  };
-
+export class ProfileComponent implements OnInit {
+  protected profile = signal<Admin | null>(null);
   protected isEditDialogOpen = false;
   protected profileForm: FormGroup;
+  protected isLoading = signal(false);
+  protected isSaving = signal(false);
+  protected selectedImageFile?: File;
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private adminService: AdminService,
+    private notifications: NotificationService
+  ) {
     this.profileForm = this.fb.group({
-      firstName: [this.profile.firstName, [Validators.required]],
-      lastName: [this.profile.lastName, [Validators.required]],
-      email: [this.profile.email, [Validators.required, Validators.email]],
-      image: [this.profile.image, [Validators.required]],
-      title: [this.profile.title, [Validators.required]],
-      bio: [this.profile.bio, [Validators.required, Validators.minLength(10)]],
+      firstName: ['', [Validators.required]],
+      lastName: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]],
+      image: [''],
+      title: [''],
+      bio: [''],
     });
   }
 
-  protected get initials() {
-    return `${this.profile.firstName[0]}${this.profile.lastName[0]}`;
+  ngOnInit() {
+    this.loadProfile();
+  }
+
+  protected loadProfile() {
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      this.profile.set(currentUser);
+      this.profileForm.patchValue({
+        firstName: currentUser.firstName || '',
+        lastName: currentUser.lastName || '',
+        email: currentUser.email || '',
+        image: currentUser.image || '',
+        title: currentUser['title'] || '',
+        bio: currentUser['bio'] || '',
+      });
+    }
+  }
+
+  protected get adminTypeName(): string {
+    const admin = this.profile();
+    return admin?.type?.name || 'Admin';
+  }
+
+  protected get isActive(): boolean {
+    const admin = this.profile();
+    return admin?.isActive ?? false;
+  }
+
+  protected get initials(): string {
+    const admin = this.profile();
+    if (!admin) return '';
+    const firstName = admin.firstName?.[0] || '';
+    const lastName = admin.lastName?.[0] || '';
+    return `${firstName}${lastName}`.toUpperCase();
+  }
+
+  protected getProfileImage(): string | undefined {
+    const admin = this.profile();
+    if (!admin?.image) return undefined;
+    return environment.IMG_URL + admin.image;
   }
 
   protected openEditDialog() {
-    this.profileForm.reset({ ...this.profile });
+    const admin = this.profile();
+    if (admin) {
+      this.profileForm.patchValue({
+        firstName: admin.firstName || '',
+        lastName: admin.lastName || '',
+        email: admin.email || '',
+        image: admin.image || '',
+        title: admin['title'] || '',
+        bio: admin['bio'] || '',
+      });
+    }
     this.isEditDialogOpen = true;
   }
 
   protected closeEditDialog() {
     this.isEditDialogOpen = false;
+    this.selectedImageFile = undefined;
   }
 
   protected saveProfile() {
@@ -74,11 +118,47 @@ export class ProfileComponent {
       return;
     }
 
-    this.profile = {
-      ...this.profile,
-      ...this.profileForm.value,
+    const admin = this.profile();
+    if (!admin?._id) {
+      this.notifications.danger('Unable to update profile. Please try again.');
+      return;
+    }
+
+    this.isSaving.set(true);
+
+    const updateData: Partial<Admin> = {
+      _id: admin._id,
+      firstName: this.profileForm.value.firstName,
+      lastName: this.profileForm.value.lastName,
+      email: this.profileForm.value.email,
+      title: this.profileForm.value.title || undefined,
+      bio: this.profileForm.value.bio || undefined,
     };
-    this.isEditDialogOpen = false;
+
+    // Only include image if it's a new file or URL
+    if (this.selectedImageFile) {
+      // Image file will be handled separately
+    } else if (this.profileForm.value.image) {
+      updateData.image = this.profileForm.value.image;
+    }
+
+    this.adminService.update(updateData, this.selectedImageFile).subscribe({
+      next: (updatedAdmin) => {
+        this.profile.set(updatedAdmin);
+        this.authService.setCurrentUser(updatedAdmin);
+        this.isEditDialogOpen = false;
+        this.selectedImageFile = undefined;
+        this.isSaving.set(false);
+        this.notifications.success('Profile updated successfully');
+      },
+      error: (error) => {
+        this.isSaving.set(false);
+        const errorMessage =
+          error?.error?.message ||
+          'Failed to update profile. Please try again.';
+        this.notifications.danger(errorMessage);
+      },
+    });
   }
 
   protected onImageChange(value?: string) {
@@ -87,5 +167,8 @@ export class ProfileComponent {
     control?.markAsTouched();
     control?.markAsDirty();
   }
-}
 
+  protected onImageFileSelected(file: File) {
+    this.selectedImageFile = file;
+  }
+}

@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { AuthService } from '@shared/services/auth.service';
 import { Credentials } from '@shared/interfaces/credentials';
 import { Router } from '@angular/router';
@@ -31,7 +31,7 @@ export class HttpErrorInterceptor implements HttpInterceptor {
     next?: HttpHandler
   ) {
     if (error.status === 401 || error.statusText === 'unauthorized') {
-      this.authService.clearTokens();
+      localStorage.clear();
       this.router.navigate(['/login']);
     }
     return throwError(() => error);

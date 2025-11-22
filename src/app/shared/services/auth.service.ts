@@ -20,7 +20,6 @@ export class AuthService {
     private router: Router,
     private route: ActivatedRoute
   ) {
-    // Load privileges from localStorage on service initialization
     this.loadPrivilegesFromStorage();
     this.loadCurrentUserFromStorage();
   }
@@ -119,6 +118,10 @@ export class AuthService {
     }
   }
 
+  getCurrentUser(): Admin | undefined {
+    return this.currentUser;
+  }
+
   clearTokens() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
@@ -185,6 +188,23 @@ export class AuthService {
       default:
         return false;
     }
+  }
+
+  getFirstAccessibleRoute(): string {
+    const routes = [
+      { path: 'overview', functionKey: 'dashboard' },
+      { path: 'admins', functionKey: 'admins' },
+      { path: 'admin-types', functionKey: 'adminTypes' },
+      { path: 'settings', functionKey: 'settings' },
+    ];
+
+    for (const route of routes) {
+      if (this.hasPrivilege(route.functionKey, PrivilegeAccess.R)) {
+        return route.path;
+      }
+    }
+
+    return 'profile';
   }
 
   get isLoggedIn(): boolean {

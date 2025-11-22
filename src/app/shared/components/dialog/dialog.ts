@@ -1,10 +1,30 @@
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  Output,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ButtonComponent } from '../button/button';
+import { PrivilegeAccess } from '@shared/enums';
+
+export interface DialogButton {
+  label: string;
+  variant?: 'primary' | 'success' | 'warning' | 'danger' | 'outline' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  icon?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  functionKey?: string;
+  privilegeAccess?: PrivilegeAccess;
+  action: () => void;
+}
 
 @Component({
   selector: 'app-dialog',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ButtonComponent],
   templateUrl: './dialog.html',
   styleUrls: ['./dialog.scss'],
 })
@@ -14,6 +34,7 @@ export class DialogComponent {
   @Input() description = '';
   @Input() width = '520px';
   @Input() disableClose = false;
+  @Input() buttons: DialogButton[] = [];
 
   @Output() closed = new EventEmitter<'backdrop' | 'escape' | 'close-button'>();
 
@@ -31,5 +52,3 @@ export class DialogComponent {
     this.closed.emit(reason);
   }
 }
-
-

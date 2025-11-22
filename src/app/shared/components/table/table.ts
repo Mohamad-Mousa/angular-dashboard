@@ -1,7 +1,21 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, Input } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  Input,
+  Output,
+  EventEmitter,
+  inject,
+  OnDestroy,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { StatusPillComponent, PillTone } from '../pill/pill';
 import { LoaderComponent } from '../loader/loader';
+import { AuthService } from '@shared/services';
+import { PrivilegeAccess } from '@shared/enums';
 
 export interface TableColumn {
   label: string;
@@ -10,13 +24,11 @@ export interface TableColumn {
   badgeClassKey?: string;
   filterable?: boolean;
   filterType?: 'text' | 'select';
-  filterOptions?:
-    | Array<{ label: string; value: string }>
-    | string[];
+  filterOptions?: Array<{ label: string; value: string }> | string[];
   sortable?: boolean;
 }
 
-type ActionKey = 'canRead' | 'canEdit' | 'canDelete';
+type ActionKey = 'canRead' | 'canWrite' | 'canEdit' | 'canDelete';
 
 @Component({
   selector: 'app-table',
@@ -25,42 +37,192 @@ type ActionKey = 'canRead' | 'canEdit' | 'canDelete';
   templateUrl: './table.html',
   styleUrl: './table.scss',
 })
-export class TableComponent {
+export class TableComponent implements OnDestroy, OnChanges {
+  private authService = inject(AuthService);
+  private destroy$ = new Subject<void>();
+  private searchSubject = new Subject<string>();
+
   @Input({ required: true }) columns: TableColumn[] = [];
   @Input({ required: true }) rows: Array<Record<string, unknown>> = [];
+  @Input() totalCount = 0;
   @Input() emptyMessage = 'No data available';
   @Input() showActions = false;
   @Input() enableFilters = false;
   @Input() enableSorting = false;
   @Input() enableGlobalSearch = true;
+  @Input() enablePagination = true;
+  @Input() pageSizeOptions = [10, 25, 50, 100];
   @Input() loading = false;
   @Input() loadingLabel = 'Loading data...';
+  @Input() functionKey?: string;
+  @Input() excludedActions: ActionKey[] = [];
+  @Input() searchDebounceTime = 500;
+  @Input() serverSideSearch = false;
+  @Input() sortBy?: string;
+  @Input() sortDirection?: 'asc' | 'desc';
+  @Output() pageChange = new EventEmitter<number>();
+  @Output() limitChange = new EventEmitter<number>();
+  @Output() searchChange = new EventEmitter<string>();
+  @Output() sortChange = new EventEmitter<{
+    sortBy: string;
+    sortDirection: 'asc' | 'desc';
+  }>();
+  @Output() readAction = new EventEmitter<Record<string, unknown>>();
+  @Output() writeAction = new EventEmitter<Record<string, unknown>>();
+  @Output() updateAction = new EventEmitter<Record<string, unknown>>();
+  @Output() deleteAction = new EventEmitter<Record<string, unknown>>();
+
+  protected currentPage = 1;
+  protected pageSize = 10;
+
   protected openRowIndex: number | null = null;
   protected filters: Record<string, string> = {};
-  protected sortColumn?: string;
-  protected sortDirection: 'asc' | 'desc' = 'asc';
+  protected internalSortColumn?: string;
+  protected internalSortDirection: 'asc' | 'desc' = 'asc';
   protected globalSearch = '';
 
-  protected readonly actionKeys: ActionKey[] = [
+  constructor() {
+    this.searchSubject
+      .pipe(
+        debounceTime(this.searchDebounceTime),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((searchTerm) => {
+        this.searchChange.emit(searchTerm);
+      });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['sortBy'] || changes['sortDirection']) {
+      // Sync internal state with inputs when they change
+      if (this.sortBy !== undefined) {
+        this.internalSortColumn = this.sortBy;
+      } else if (changes['sortBy']?.previousValue !== undefined) {
+        // Only clear if sortBy was explicitly set to undefined
+        this.internalSortColumn = undefined;
+      }
+      if (this.sortDirection !== undefined) {
+        this.internalSortDirection = this.sortDirection;
+      }
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  protected readonly allActionKeys: ActionKey[] = [
     'canRead',
+    'canWrite',
     'canEdit',
     'canDelete',
   ];
 
+  protected get actionKeys(): ActionKey[] {
+    return this.allActionKeys.filter(
+      (key) => !this.excludedActions.includes(key)
+    );
+  }
+
   protected readonly actionLabels: Record<ActionKey, string> = {
     canRead: 'Read',
+    canWrite: 'Create',
     canEdit: 'Edit',
     canDelete: 'Delete',
   };
   protected readonly actionIcons: Record<ActionKey, string> = {
     canRead: 'visibility',
+    canWrite: 'add',
     canEdit: 'edit',
     canDelete: 'delete',
   };
 
+  protected readonly actionPrivilegeMap: Record<ActionKey, PrivilegeAccess> = {
+    canRead: PrivilegeAccess.R,
+    canWrite: PrivilegeAccess.W,
+    canEdit: PrivilegeAccess.U,
+    canDelete: PrivilegeAccess.D,
+  };
+
+  protected get totalPages(): number {
+    return Math.ceil(this.totalCount / this.pageSize) || 1;
+  }
+
+  protected get startIndex(): number {
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  protected get endIndex(): number {
+    const end = this.currentPage * this.pageSize;
+    return end > this.totalCount ? this.totalCount : end;
+  }
+
+  protected get hasPreviousPage(): boolean {
+    return this.currentPage > 1;
+  }
+
+  protected get hasNextPage(): boolean {
+    return this.currentPage < this.totalPages;
+  }
+
+  protected get activeSortColumn(): string | undefined {
+    return this.sortBy ?? this.internalSortColumn;
+  }
+
+  protected get activeSortDirection(): 'asc' | 'desc' {
+    // Use input sortDirection if provided, otherwise use internal sortDirection
+    // If no sort column is active, default to 'asc'
+    if (this.sortDirection !== undefined) {
+      return this.sortDirection;
+    }
+    return this.internalSortColumn ? this.internalSortDirection : 'asc';
+  }
+
+  protected goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages || page === this.currentPage) {
+      return;
+    }
+
+    this.currentPage = page;
+    this.pageChange.emit(page);
+  }
+
+  protected onPageSizeChange(size: number): void {
+    if (size === this.pageSize) {
+      return;
+    }
+
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.limitChange.emit(size);
+    this.pageChange.emit(1);
+  }
+
+  protected previousPage(): void {
+    if (this.hasPreviousPage) {
+      this.goToPage(this.currentPage - 1);
+    }
+  }
+
+  protected nextPage(): void {
+    if (this.hasNextPage) {
+      this.goToPage(this.currentPage + 1);
+    }
+  }
+
+  protected firstPage(): void {
+    this.goToPage(1);
+  }
+
+  protected lastPage(): void {
+    this.goToPage(this.totalPages);
+  }
+
   protected badgeClassFor(
     row: Record<string, unknown>,
-    column: TableColumn,
+    column: TableColumn
   ): PillTone {
     if (column.badgeClassKey) {
       const value = row[column.badgeClassKey];
@@ -78,8 +240,33 @@ export class TableComponent {
       : 'bg-light text-muted border';
   }
 
-  protected actionEnabled(row: Record<string, unknown>, key: ActionKey): boolean {
+  protected actionEnabled(
+    row: Record<string, unknown>,
+    key: ActionKey
+  ): boolean {
+    if (this.functionKey) {
+      const access = this.actionPrivilegeMap[key];
+      return this.authService.hasPrivilege(this.functionKey, access);
+    }
     return Boolean(row[key]);
+  }
+
+  protected onActionClick(row: Record<string, unknown>, key: ActionKey): void {
+    switch (key) {
+      case 'canRead':
+        this.readAction.emit(row);
+        break;
+      case 'canWrite':
+        this.writeAction.emit(row);
+        break;
+      case 'canEdit':
+        this.updateAction.emit(row);
+        break;
+      case 'canDelete':
+        this.deleteAction.emit(row);
+        break;
+    }
+    this.closeActions();
   }
 
   protected toggleActions(index: number): void {
@@ -100,32 +287,53 @@ export class TableComponent {
   protected toggleSort(column: TableColumn): void {
     if (!this.enableSorting || column.sortable === false) return;
     const key = column.key;
-    if (this.sortColumn === key) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    const currentSortColumn = this.activeSortColumn;
+    const currentSortDirection = this.activeSortDirection;
+    let newDirection: 'asc' | 'desc' = 'asc';
+
+    if (currentSortColumn === key) {
+      newDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-      this.sortColumn = key;
-      this.sortDirection = 'asc';
+      newDirection = 'asc';
     }
+
+    // Update internal state
+    this.internalSortColumn = key;
+    this.internalSortDirection = newDirection;
+
+    // Emit sort change event for parent component to handle query params
+    this.sortChange.emit({
+      sortBy: key,
+      sortDirection: newDirection,
+    });
   }
 
   protected clearSort(): void {
-    this.sortColumn = undefined;
+    this.internalSortColumn = undefined;
+    this.internalSortDirection = 'asc';
   }
 
   protected onGlobalSearchChange(value: string): void {
     this.globalSearch = value;
+    this.searchSubject.next(value.trim());
   }
 
   protected get processedRows(): Array<Record<string, unknown>> {
     let data = [...this.rows];
 
-    if (this.enableFilters && this.enableGlobalSearch) {
+    if (
+      this.enableFilters &&
+      this.enableGlobalSearch &&
+      !this.serverSideSearch
+    ) {
       const query = this.globalSearch.trim().toLowerCase();
       if (query) {
         data = data.filter((row) =>
           this.columns.some((column) =>
-            String(row[column.key] ?? '').toLowerCase().includes(query),
-          ),
+            String(row[column.key] ?? '')
+              .toLowerCase()
+              .includes(query)
+          )
         );
       }
     }
@@ -144,10 +352,14 @@ export class TableComponent {
       }
     }
 
-    if (this.enableSorting && this.sortColumn) {
-      const column = this.columns.find((col) => col.key === this.sortColumn);
+    // Use sortBy input if provided, otherwise use internal sortColumn
+    const activeSortColumn = this.activeSortColumn;
+    const activeSortDirection = this.activeSortDirection;
+
+    if (this.enableSorting && activeSortColumn) {
+      const column = this.columns.find((col) => col.key === activeSortColumn);
       if (column) {
-        const direction = this.sortDirection === 'asc' ? 1 : -1;
+        const direction = activeSortDirection === 'asc' ? 1 : -1;
         data = [...data].sort((a, b) => {
           const valueA = a[column.key];
           const valueB = b[column.key];
@@ -167,7 +379,10 @@ export class TableComponent {
     this.openRowIndex = null;
   }
 
-  protected cellLabel(row: Record<string, unknown>, column: TableColumn): string {
+  protected cellLabel(
+    row: Record<string, unknown>,
+    column: TableColumn
+  ): string {
     const value = row[column.key];
     if (value === null || value === undefined || value === '') {
       return '—';
@@ -192,4 +407,3 @@ export class TableComponent {
     return 'neutral';
   }
 }
-

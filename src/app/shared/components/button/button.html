@@ -1,17 +1,11 @@
-<button
-  [type]="type"
-  [ngClass]="hostClasses"
-  [disabled]="disabled || loading"
-  (click)="onClick($event)"
->
+<button [type]="type" [ngClass]="hostClasses" [disabled]="isDisabled || loading" (click)="onClick($event)">
   @if (icon) {
-    <span class="material-symbols-rounded align-middle me-1" aria-hidden="true" [class.opacity-0]="loading">
-      {{ icon }}
-    </span>
+  <span class="material-symbols-rounded align-middle me-1" aria-hidden="true" [class.opacity-0]="loading">
+    {{ icon }}
+  </span>
   }
   <span class="align-middle" [class.opacity-0]="loading">{{ label }}</span>
   @if (loading) {
-    <app-loader size="sm" context="button"></app-loader>
+  <app-loader size="sm" context="button"></app-loader>
   }
 </button>
-
