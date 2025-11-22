@@ -1,14 +1,20 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './shared/guards/auth.guard';
+import { loginGuard } from './shared/guards/login.guard';
+import { privilegeGuard } from './shared/guards/privilege.guard';
+import { PrivilegeAccess } from './shared/enums';
 
 export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./login/login').then((m) => m.Login),
+    canActivate: [loginGuard],
   },
   {
     path: 'dashboard',
     loadComponent: () =>
       import('./dashboard/dashboard').then((m) => m.Dashboard),
+    canActivate: [authGuard],
     children: [
       {
         path: '',
@@ -19,35 +25,38 @@ export const routes: Routes = [
         path: 'overview',
         loadComponent: () =>
           import('./dashboard/components/overview/overview').then(
-            (m) => m.OverviewComponent,
+            (m) => m.OverviewComponent
           ),
       },
       {
         path: 'admins',
         loadComponent: () =>
           import('./dashboard/components/admins/admins').then(
-            (m) => m.AdminsComponent,
+            (m) => m.AdminsComponent
           ),
+        canActivate: [privilegeGuard('admins', PrivilegeAccess.R)],
       },
       {
         path: 'admin-types',
         loadComponent: () =>
           import('./dashboard/components/admin-types/admin-types').then(
-            (m) => m.AdminTypesComponent,
+            (m) => m.AdminTypesComponent
           ),
+        canActivate: [privilegeGuard('adminTypes', PrivilegeAccess.R)],
       },
       {
         path: 'settings',
         loadComponent: () =>
           import('./dashboard/components/settings/settings').then(
-            (m) => m.SettingsComponent,
+            (m) => m.SettingsComponent
           ),
+        canActivate: [privilegeGuard('settings', PrivilegeAccess.R)],
       },
       {
         path: 'profile',
         loadComponent: () =>
           import('./dashboard/components/profile/profile').then(
-            (m) => m.ProfileComponent,
+            (m) => m.ProfileComponent
           ),
       },
     ],

@@ -10,42 +10,28 @@
         <label for="email">Email address</label>
         <div class="input-wrapper">
           <i class="ri-mail-line" aria-hidden="true"></i>
-          <input
-            id="email"
-            type="email"
-            placeholder="name@company.com"
-            formControlName="email"
-            autocomplete="email"
-          />
+          <input id="email" type="email" placeholder="name@company.com" formControlName="email" autocomplete="email" />
         </div>
         @if (email?.errors?.['required']) {
-          <small>Email is required.</small>
+        <small>Email is required.</small>
         }
         @if (email?.errors?.['email']) {
-          <small>Enter a valid email.</small>
+        <small>Enter a valid email.</small>
         }
       </div>
 
-      <div
-        class="form-field"
-        [class.invalid]="password?.invalid && password?.touched"
-      >
+      <div class="form-field" [class.invalid]="password?.invalid && password?.touched">
         <label for="password">Password</label>
         <div class="input-wrapper">
           <i class="ri-lock-line" aria-hidden="true"></i>
-          <input
-            id="password"
-            type="password"
-            placeholder="Enter your password"
-            formControlName="password"
-            autocomplete="current-password"
-          />
+          <input id="password" type="password" placeholder="Enter your password" formControlName="password"
+            autocomplete="current-password" />
         </div>
         @if (password?.errors?.['required']) {
-          <small>Password is required.</small>
+        <small>Password is required.</small>
         }
         @if (password?.errors?.['minlength']) {
-          <small>Use at least 8 characters.</small>
+        <small>Use at least 8 characters.</small>
         }
       </div>
 
@@ -57,11 +43,17 @@
         <a class="link" href="#">Forgot password?</a>
       </div>
 
-      <button type="submit" [disabled]="isSubmitting || loginForm.invalid">
-        @if (!isSubmitting) {
-          <span>Sign in</span>
+      @if (errorMessage()) {
+      <div class="alert alert-danger mb-3" role="alert">
+        <small>{{ errorMessage() }}</small>
+      </div>
+      }
+
+      <button type="submit" [disabled]="isSubmitting() || loginForm.invalid">
+        @if (!isSubmitting()) {
+        <span>Sign in</span>
         } @else {
-          <span>Signing in...</span>
+        <span>Signing in...</span>
         }
       </button>
     </form>

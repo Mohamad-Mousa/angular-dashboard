@@ -30,10 +30,9 @@ export class HttpErrorInterceptor implements HttpInterceptor {
     request?: HttpRequest<Credentials>,
     next?: HttpHandler
   ) {
-    // Invalid token error
     if (error.status === 401 || error.statusText === 'unauthorized') {
-      localStorage.removeItem('access_token');
-      window.location.reload();
+      this.authService.clearTokens();
+      this.router.navigate(['/login']);
     }
     return throwError(() => error);
   }

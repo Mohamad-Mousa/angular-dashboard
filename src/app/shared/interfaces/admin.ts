@@ -1,15 +1,23 @@
-import { PrivilegeAccess } from '@shared/enums';
-
-export interface FunctionList {
-  functionName: string;
+export interface Function {
+  _id: string;
+  name: string;
+  key: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 export interface Privilege {
-  functionlist: FunctionList;
-  [PrivilegeAccess.R]?: boolean;
-  [PrivilegeAccess.W]?: boolean;
-  [PrivilegeAccess.U]?: boolean;
-  [PrivilegeAccess.D]?: boolean;
+  _id: string;
+  function: Function;
+  adminType: string;
+  read: boolean;
+  write: boolean;
+  update: boolean;
+  delete: boolean;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 export interface Admin {
@@ -27,6 +35,8 @@ export interface User {
 }
 
 export interface UserAuthenticated {
-  accessToken: string;
   admin: Admin;
+  accessToken: string;
+  refreshToken: string;
+  privileges: Privilege[];
 }

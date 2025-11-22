@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { DialogComponent } from '../../../shared/components/dialog/dialog';
+import { AuthService } from '@shared/services';
 
 interface NavTab {
   label: string;
@@ -60,7 +61,7 @@ export class Sidebar {
     },
   ];
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: AuthService) {}
 
   protected toggleSidebar() {
     this.isCollapsed = !this.isCollapsed;
@@ -87,7 +88,15 @@ export class Sidebar {
 
   protected confirmLogout() {
     this.isLogoutDialogOpen = false;
-    this.router.navigate(['/login']);
-    this.closeMobilePanel();
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+        this.closeMobilePanel();
+      },
+      error: () => {
+        this.router.navigate(['/login']);
+        this.closeMobilePanel();
+      },
+    });
   }
 }

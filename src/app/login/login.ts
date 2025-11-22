@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -7,6 +7,8 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AuthService } from '@shared/services';
 
 @Component({
   selector: 'app-login',
@@ -17,12 +19,17 @@ import { Router } from '@angular/router';
 })
 export class Login {
   loginForm: FormGroup;
-  isSubmitting = false;
+  isSubmitting = signal(false);
+  errorMessage = signal<string | null>(null);
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private authService: AuthService
+  ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
+      email: ['superadmin@gmail.com', [Validators.required, Validators.email]],
+      password: ['P@ssw0rd', [Validators.required, Validators.minLength(8)]],
       rememberMe: [true],
     });
   }
@@ -38,17 +45,30 @@ export class Login {
   onSubmit() {
     this.loginForm.markAllAsTouched();
 
-    if (this.loginForm.invalid || this.isSubmitting) {
+    if (this.loginForm.invalid || this.isSubmitting()) {
       return;
     }
 
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
 
-    // Simulate request
-    setTimeout(() => {
-      this.isSubmitting = false;
-      console.log('Login payload', this.loginForm.value);
-      this.router.navigate(['/dashboard']);
-    }, 1200);
+    const loginData = {
+      email: this.loginForm.value.email,
+      password: this.loginForm.value.password,
+    };
+
+    this.authService.login(loginData).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.errorMessage.set(null);
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.isSubmitting.set(false);
+        this.errorMessage.set(
+          err?.error?.message || 'Login failed. Please try again.'
+        );
+      },
+    });
   }
 }

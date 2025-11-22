@@ -1,5 +1,6 @@
 import { Component, EventEmitter, HostListener, Output } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '@shared/services';
 
 interface NavTab {
   label: string;
@@ -24,7 +25,7 @@ export class Header {
 
   protected isProfileMenuOpen = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: AuthService) {}
 
   protected toggleProfileMenu(event: MouseEvent) {
     event.stopPropagation();
@@ -44,7 +45,14 @@ export class Header {
   protected logout(event?: MouseEvent) {
     event?.stopPropagation();
     this.isProfileMenuOpen = false;
-    this.router.navigate(['/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: () => {
+        this.router.navigate(['/login']);
+      },
+    });
   }
 
   @HostListener('document:click')

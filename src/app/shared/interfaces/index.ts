@@ -3,7 +3,7 @@ export type {
   Privilege,
   User,
   UserAuthenticated,
-  FunctionList,
+  Function,
 } from './admin';
 export type { Credentials } from './credentials';
 export type { ApiResponse } from './ApiResponse';
