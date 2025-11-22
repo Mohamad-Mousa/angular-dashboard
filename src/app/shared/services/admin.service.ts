@@ -23,6 +23,7 @@ export class AdminService {
    * @param search - Search term (optional)
    * @param sortBy - Field name to sort by (optional)
    * @param sortDirection - Sort direction: 'asc' or 'desc' (optional)
+   * @param filters - Filter object with column keys and values (optional)
    * @returns Observable with paginated admin data
    */
   findMany(
@@ -30,7 +31,8 @@ export class AdminService {
     limit: number = 10,
     search?: string,
     sortBy?: string,
-    sortDirection?: 'asc' | 'desc'
+    sortDirection?: 'asc' | 'desc',
+    filters?: Record<string, string>
   ): Observable<AdminPaginatedResponse> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -46,6 +48,16 @@ export class AdminService {
 
     if (sortDirection) {
       params = params.set('sortDirection', sortDirection);
+    }
+
+    // Add filters as query parameters (similar to term)
+    if (filters) {
+      Object.keys(filters).forEach((key) => {
+        const value = filters[key];
+        if (value && value.trim()) {
+          params = params.set(key, value.trim());
+        }
+      });
     }
 
     return this.http

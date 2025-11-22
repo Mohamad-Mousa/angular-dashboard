@@ -24,7 +24,10 @@ import { AdminService, AdminTypeService } from '../../../shared/services';
 import { Admin, AdminType } from '../../../shared/interfaces';
 import { PrivilegeAccess } from '../../../shared/enums';
 import { DialogButton } from '../../../shared/components/dialog/dialog';
-import { FormInputComponent, SelectOption } from '../../../shared/components/form-input/form-input';
+import {
+  FormInputComponent,
+  SelectOption,
+} from '../../../shared/components/form-input/form-input';
 
 @Component({
   selector: 'app-admins-section',
@@ -56,7 +59,10 @@ export class AdminsComponent implements OnInit, OnDestroy {
       badgeClassKey: 'statusClass',
       filterable: true,
       filterType: 'select',
-      filterOptions: ['Active', 'Inactive'],
+      filterOptions: [
+        { label: 'Active', value: 'true' },
+        { label: 'Inactive', value: 'false' },
+      ],
       sortable: true,
     },
   ];
@@ -65,9 +71,12 @@ export class AdminsComponent implements OnInit, OnDestroy {
   protected totalCount = signal(0);
   protected tableLoading = signal(false);
   protected adminTypes = signal<AdminType[]>([]);
+  protected createDialogLoading = signal(false);
+  protected deleteDialogLoading = signal(false);
   private currentPage = 1;
   private currentLimit = 10;
   private currentSearch = '';
+  private currentFilters: Record<string, string> = {};
   protected sortBy?: string;
   protected sortDirection?: 'asc' | 'desc';
 
@@ -112,18 +121,23 @@ export class AdminsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.tableLoading.set(false);
-    this.loadAdmins(this.currentPage, this.currentLimit);
+    this.loadAdmins(
+      this.currentPage,
+      this.currentLimit,
+      this.currentSearch,
+      this.sortBy,
+      this.sortDirection,
+      this.currentFilters
+    );
     this.loadAdminTypes();
   }
 
   private loadAdminTypes(): void {
-    // Load all admin types with a large limit to get all types
     this.adminTypeService
-      .findMany(1, 1000)
+      .findMany(1, 10)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          // Filter only active admin types
           const activeTypes = response.data.filter((type) => type.isActive);
           this.adminTypes.set(activeTypes);
         },
@@ -148,7 +162,8 @@ export class AdminsComponent implements OnInit, OnDestroy {
     limit: number,
     search?: string,
     sortBy?: string,
-    sortDirection?: 'asc' | 'desc'
+    sortDirection?: 'asc' | 'desc',
+    filters?: Record<string, string>
   ): void {
     this.tableLoading.set(true);
     this.currentPage = page;
@@ -162,9 +177,19 @@ export class AdminsComponent implements OnInit, OnDestroy {
     if (sortDirection !== undefined) {
       this.sortDirection = sortDirection;
     }
+    if (filters !== undefined) {
+      this.currentFilters = filters;
+    }
 
     this.adminService
-      .findMany(page, limit, this.currentSearch, this.sortBy, this.sortDirection)
+      .findMany(
+        page,
+        limit,
+        this.currentSearch,
+        this.sortBy,
+        this.sortDirection,
+        this.currentFilters
+      )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -199,16 +224,48 @@ export class AdminsComponent implements OnInit, OnDestroy {
   }
 
   protected onPageChange(page: number): void {
-    this.loadAdmins(page, this.currentLimit, this.currentSearch, this.sortBy, this.sortDirection);
+    this.loadAdmins(
+      page,
+      this.currentLimit,
+      this.currentSearch,
+      this.sortBy,
+      this.sortDirection,
+      this.currentFilters
+    );
   }
 
   protected onLimitChange(limit: number): void {
-    this.loadAdmins(1, limit, this.currentSearch, this.sortBy, this.sortDirection);
+    this.loadAdmins(
+      1,
+      limit,
+      this.currentSearch,
+      this.sortBy,
+      this.sortDirection,
+      this.currentFilters
+    );
   }
 
   protected onSearchChange(searchTerm: string): void {
     // Reset to first page when search changes
-    this.loadAdmins(1, this.currentLimit, searchTerm, this.sortBy, this.sortDirection);
+    this.loadAdmins(
+      1,
+      this.currentLimit,
+      searchTerm,
+      this.sortBy,
+      this.sortDirection,
+      this.currentFilters
+    );
+  }
+
+  protected onFilterChange(filters: Record<string, string>): void {
+    this.loadAdmins(
+      1,
+      this.currentLimit,
+      this.currentSearch,
+      this.sortBy,
+      this.sortDirection,
+      filters
+    );
   }
 
   protected onSortChange(event: {
@@ -216,7 +273,14 @@ export class AdminsComponent implements OnInit, OnDestroy {
     sortDirection: 'asc' | 'desc';
   }): void {
     // Reset to first page when sorting changes
-    this.loadAdmins(1, this.currentLimit, this.currentSearch, event.sortBy, event.sortDirection);
+    this.loadAdmins(
+      1,
+      this.currentLimit,
+      this.currentSearch,
+      event.sortBy,
+      event.sortDirection,
+      this.currentFilters
+    );
   }
 
   protected get isEditMode(): boolean {
@@ -264,41 +328,61 @@ export class AdminsComponent implements OnInit, OnDestroy {
     return this.isEditMode ? 'Update admin' : 'Create admin';
   }
 
+  protected get createButtonLabel(): string {
+    const isLoading = this.createDialogLoading();
+    if (isLoading) {
+      return this.isEditMode ? 'Updating...' : 'Creating...';
+    }
+    return this.submitButtonLabel;
+  }
+
   protected get createDialogButtons(): DialogButton[] {
+    const isLoading = this.createDialogLoading();
     return [
       {
         label: 'Cancel',
         variant: 'ghost',
         size: 'sm',
+        disabled: isLoading,
         action: () => this.closeCreateAdminDialog(),
       },
       {
-        label: this.submitButtonLabel,
+        label: this.createButtonLabel,
         variant: 'primary',
         size: 'sm',
         functionKey: this.functionKey,
         privilegeAccess: this.isEditMode
           ? PrivilegeAccess.U
           : PrivilegeAccess.W,
+        loading: isLoading,
+        disabled: isLoading,
         action: () => this.onCreateAdminSubmit(),
       },
     ];
   }
 
+  protected get deleteButtonLabel(): string {
+    return this.deleteDialogLoading() ? 'Deleting...' : 'Delete';
+  }
+
   protected get deleteDialogButtons(): DialogButton[] {
+    const isLoading = this.deleteDialogLoading();
     return [
       {
         label: 'Cancel',
         variant: 'ghost',
         size: 'sm',
+        disabled: isLoading,
         action: () => this.closeDeleteDialog(),
       },
       {
-        label: 'Delete',
+        label: this.deleteButtonLabel,
         variant: 'danger',
         size: 'sm',
         functionKey: this.functionKey,
         privilegeAccess: this.deletePrivilege,
+        loading: isLoading,
+        disabled: isLoading,
         action: () => this.confirmDelete(),
       },
     ];
@@ -311,10 +395,14 @@ export class AdminsComponent implements OnInit, OnDestroy {
   }
 
   protected closeCreateAdminDialog() {
+    if (this.createDialogLoading()) {
+      return; // Prevent closing during API call
+    }
     this.isCreateDialogOpen = false;
     this.selectedAdmin = undefined;
     this.selectedImageFile = undefined;
     this.imagePreview = undefined;
+    this.createDialogLoading.set(false);
     this.resetForm();
   }
 
@@ -347,10 +435,11 @@ export class AdminsComponent implements OnInit, OnDestroy {
 
   protected onCreateAdminSubmit() {
     this.createAdminForm.markAllAsTouched();
-    if (this.createAdminForm.invalid) {
+    if (this.createAdminForm.invalid || this.createDialogLoading()) {
       return;
     }
 
+    this.createDialogLoading.set(true);
     this.tableLoading.set(true);
     const formValue = this.createAdminForm.value;
 
@@ -375,13 +464,15 @@ export class AdminsComponent implements OnInit, OnDestroy {
 
     operation.pipe(takeUntil(this.destroy$)).subscribe({
       next: (admin) => {
+        this.createDialogLoading.set(false);
         this.closeCreateAdminDialog();
         this.loadAdmins(
           this.currentPage,
           this.currentLimit,
           this.currentSearch,
           this.sortBy,
-          this.sortDirection
+          this.sortDirection,
+          this.currentFilters
         );
 
         this.notifications.success(
@@ -396,6 +487,7 @@ export class AdminsComponent implements OnInit, OnDestroy {
           `Error ${this.isEditMode ? 'updating' : 'creating'} admin:`,
           error
         );
+        this.createDialogLoading.set(false);
         this.notifications.danger(
           error.error?.message ||
             `An error occurred while ${
@@ -545,28 +637,35 @@ export class AdminsComponent implements OnInit, OnDestroy {
   }
 
   protected closeDeleteDialog() {
+    if (this.deleteDialogLoading()) {
+      return; // Prevent closing during API call
+    }
     this.isDeleteDialogOpen = false;
     this.adminToDelete = undefined;
+    this.deleteDialogLoading.set(false);
   }
 
   protected confirmDelete() {
-    if (!this.adminToDelete?._id) {
+    if (!this.adminToDelete?._id || this.deleteDialogLoading()) {
       return;
     }
 
+    this.deleteDialogLoading.set(true);
     this.tableLoading.set(true);
     this.adminService
       .delete(this.adminToDelete._id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
+          this.deleteDialogLoading.set(false);
           this.closeDeleteDialog();
           this.loadAdmins(
             this.currentPage,
             this.currentLimit,
             this.currentSearch,
             this.sortBy,
-            this.sortDirection
+            this.sortDirection,
+            this.currentFilters
           );
 
           this.notifications.success(
@@ -576,6 +675,7 @@ export class AdminsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error deleting admin:', error);
+          this.deleteDialogLoading.set(false);
           this.notifications.danger(
             error.error?.message ||
               'An error occurred while deleting the admin',

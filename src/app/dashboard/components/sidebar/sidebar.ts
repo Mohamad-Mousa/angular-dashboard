@@ -51,6 +51,13 @@ export class Sidebar {
       functionKey: 'adminTypes',
     },
     {
+      label: 'Activity Logs',
+      description: 'View system activity and audit trail',
+      path: 'activity-logs',
+      icon: 'history',
+      functionKey: 'userLogs',
+    },
+    {
       label: 'Settings',
       description: 'Audit logs and preferences',
       path: 'settings',

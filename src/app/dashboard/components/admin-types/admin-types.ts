@@ -64,7 +64,10 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
       badgeClassKey: 'statusClass',
       filterable: true,
       filterType: 'select',
-      filterOptions: ['Active', 'Inactive'],
+      filterOptions: [
+        { label: 'Active', value: 'true' },
+        { label: 'Inactive', value: 'false' },
+      ],
       sortable: true,
     },
   ];
@@ -73,9 +76,12 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
   protected tableRows = signal<Record<string, unknown>[]>([]);
   protected totalCount = signal(0);
   protected tableLoading = signal(false);
+  protected createDialogLoading = signal(false);
+  protected deleteDialogLoading = signal(false);
   private currentPage = 1;
   private currentLimit = 10;
   private currentSearch = '';
+  private currentFilters: Record<string, string> = {};
   protected sortBy?: string;
   protected sortDirection?: 'asc' | 'desc';
 
@@ -126,7 +132,14 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.tableLoading.set(false);
-    this.loadAdminTypes(this.currentPage, this.currentLimit);
+    this.loadAdminTypes(
+      this.currentPage,
+      this.currentLimit,
+      this.currentSearch,
+      this.sortBy,
+      this.sortDirection,
+      this.currentFilters
+    );
   }
 
   ngOnDestroy(): void {
@@ -139,7 +152,8 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
     limit: number,
     search?: string,
     sortBy?: string,
-    sortDirection?: 'asc' | 'desc'
+    sortDirection?: 'asc' | 'desc',
+    filters?: Record<string, string>
   ): void {
     this.tableLoading.set(true);
     this.currentPage = page;
@@ -153,6 +167,9 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
     if (sortDirection !== undefined) {
       this.sortDirection = sortDirection;
     }
+    if (filters !== undefined) {
+      this.currentFilters = filters;
+    }
 
     this.adminTypeService
       .findMany(
@@ -160,7 +177,8 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
         limit,
         this.currentSearch,
         this.sortBy,
-        this.sortDirection
+        this.sortDirection,
+        this.currentFilters
       )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -205,7 +223,8 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
       this.currentLimit,
       this.currentSearch,
       this.sortBy,
-      this.sortDirection
+      this.sortDirection,
+      this.currentFilters
     );
   }
 
@@ -215,7 +234,8 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
       limit,
       this.currentSearch,
       this.sortBy,
-      this.sortDirection
+      this.sortDirection,
+      this.currentFilters
     );
   }
 
@@ -226,7 +246,19 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
       this.currentLimit,
       searchTerm,
       this.sortBy,
-      this.sortDirection
+      this.sortDirection,
+      this.currentFilters
+    );
+  }
+
+  protected onFilterChange(filters: Record<string, string>): void {
+    this.loadAdminTypes(
+      1,
+      this.currentLimit,
+      this.currentSearch,
+      this.sortBy,
+      this.sortDirection,
+      filters
     );
   }
 
@@ -240,7 +272,8 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
       this.currentLimit,
       this.currentSearch,
       event.sortBy,
-      event.sortDirection
+      event.sortDirection,
+      this.currentFilters
     );
   }
 
@@ -262,41 +295,61 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
     return this.isEditMode ? 'Update type' : 'Create type';
   }
 
+  protected get createButtonLabel(): string {
+    const isLoading = this.createDialogLoading();
+    if (isLoading) {
+      return this.isEditMode ? 'Updating...' : 'Creating...';
+    }
+    return this.submitButtonLabel;
+  }
+
   protected get createDialogButtons(): DialogButton[] {
+    const isLoading = this.createDialogLoading();
     return [
       {
         label: 'Cancel',
         variant: 'ghost',
         size: 'sm',
+        disabled: isLoading,
         action: () => this.closeCreateTypeDialog(),
       },
       {
-        label: this.submitButtonLabel,
+        label: this.createButtonLabel,
         variant: 'primary',
         size: 'sm',
         functionKey: this.functionKey,
         privilegeAccess: this.isEditMode
           ? PrivilegeAccess.U
           : PrivilegeAccess.W,
+        loading: isLoading,
+        disabled: isLoading,
         action: () => this.onCreateTypeSubmit(),
       },
     ];
   }
 
+  protected get deleteButtonLabel(): string {
+    return this.deleteDialogLoading() ? 'Deleting...' : 'Delete';
+  }
+
   protected get deleteDialogButtons(): DialogButton[] {
+    const isLoading = this.deleteDialogLoading();
     return [
       {
         label: 'Cancel',
         variant: 'ghost',
         size: 'sm',
+        disabled: isLoading,
         action: () => this.closeDeleteDialog(),
       },
       {
-        label: 'Delete',
+        label: this.deleteButtonLabel,
         variant: 'danger',
         size: 'sm',
         functionKey: this.functionKey,
         privilegeAccess: this.deletePrivilege,
+        loading: isLoading,
+        disabled: isLoading,
         action: () => this.confirmDelete(),
       },
     ];
@@ -309,8 +362,12 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
   }
 
   protected closeCreateTypeDialog() {
+    if (this.createDialogLoading()) {
+      return; // Prevent closing during API call
+    }
     this.isCreateDialogOpen = false;
     this.selectedAdminType = undefined;
+    this.createDialogLoading.set(false);
     this.resetForm();
   }
 
@@ -386,10 +443,11 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
 
   protected onCreateTypeSubmit() {
     this.createTypeForm.markAllAsTouched();
-    if (this.createTypeForm.invalid) {
+    if (this.createTypeForm.invalid || this.createDialogLoading()) {
       return;
     }
 
+    this.createDialogLoading.set(true);
     this.tableLoading.set(true);
     const formValue = this.createTypeForm.value;
     const privilegesGroup = formValue.privileges as Record<string, any>;
@@ -421,13 +479,15 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (adminType) => {
+            this.createDialogLoading.set(false);
             this.closeCreateTypeDialog();
             this.loadAdminTypes(
               this.currentPage,
               this.currentLimit,
               this.currentSearch,
               this.sortBy,
-              this.sortDirection
+              this.sortDirection,
+              this.currentFilters
             );
 
             this.notifications.success(
@@ -437,6 +497,7 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
           },
           error: (error) => {
             console.error('Error updating admin type:', error);
+            this.createDialogLoading.set(false);
             this.notifications.danger(
               error.error?.message ||
                 'An error occurred while updating the admin type',
@@ -456,13 +517,15 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (adminType) => {
+            this.createDialogLoading.set(false);
             this.closeCreateTypeDialog();
             this.loadAdminTypes(
               this.currentPage,
               this.currentLimit,
               this.currentSearch,
               this.sortBy,
-              this.sortDirection
+              this.sortDirection,
+              this.currentFilters
             );
 
             this.notifications.success(
@@ -472,6 +535,7 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
           },
           error: (error) => {
             console.error('Error creating admin type:', error);
+            this.createDialogLoading.set(false);
             this.notifications.danger(
               error.error?.message ||
                 'An error occurred while creating the admin type',
@@ -602,28 +666,35 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
   }
 
   protected closeDeleteDialog() {
+    if (this.deleteDialogLoading()) {
+      return; // Prevent closing during API call
+    }
     this.isDeleteDialogOpen = false;
     this.adminTypeToDelete = undefined;
+    this.deleteDialogLoading.set(false);
   }
 
   protected confirmDelete() {
-    if (!this.adminTypeToDelete?._id) {
+    if (!this.adminTypeToDelete?._id || this.deleteDialogLoading()) {
       return;
     }
 
+    this.deleteDialogLoading.set(true);
     this.tableLoading.set(true);
     this.adminTypeService
       .delete(this.adminTypeToDelete._id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
+          this.deleteDialogLoading.set(false);
           this.closeDeleteDialog();
           this.loadAdminTypes(
             this.currentPage,
             this.currentLimit,
             this.currentSearch,
             this.sortBy,
-            this.sortDirection
+            this.sortDirection,
+            this.currentFilters
           );
 
           this.notifications.success(
@@ -633,6 +704,7 @@ export class AdminTypesComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error deleting admin type:', error);
+          this.deleteDialogLoading.set(false);
           this.notifications.danger(
             error.error?.message ||
               'An error occurred while deleting the admin type',

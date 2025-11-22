@@ -41,6 +41,7 @@ export class TableComponent implements OnDestroy, OnChanges {
   private authService = inject(AuthService);
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
+  private filterSubject = new Subject<Record<string, string>>();
 
   @Input({ required: true }) columns: TableColumn[] = [];
   @Input({ required: true }) rows: Array<Record<string, unknown>> = [];
@@ -58,11 +59,13 @@ export class TableComponent implements OnDestroy, OnChanges {
   @Input() excludedActions: ActionKey[] = [];
   @Input() searchDebounceTime = 500;
   @Input() serverSideSearch = false;
+  @Input() serverSideFilters = false;
   @Input() sortBy?: string;
   @Input() sortDirection?: 'asc' | 'desc';
   @Output() pageChange = new EventEmitter<number>();
   @Output() limitChange = new EventEmitter<number>();
   @Output() searchChange = new EventEmitter<string>();
+  @Output() filterChange = new EventEmitter<Record<string, string>>();
   @Output() sortChange = new EventEmitter<{
     sortBy: string;
     sortDirection: 'asc' | 'desc';
@@ -90,6 +93,19 @@ export class TableComponent implements OnDestroy, OnChanges {
       )
       .subscribe((searchTerm) => {
         this.searchChange.emit(searchTerm);
+      });
+
+    this.filterSubject
+      .pipe(
+        debounceTime(this.searchDebounceTime),
+        distinctUntilChanged((prev, curr) => {
+          // Compare filter objects by serializing them
+          return JSON.stringify(prev) === JSON.stringify(curr);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((filters) => {
+        this.filterChange.emit(filters);
       });
   }
 
@@ -274,10 +290,27 @@ export class TableComponent implements OnDestroy, OnChanges {
   }
 
   protected onFilterChange(columnKey: string, value: string): void {
-    this.filters = {
-      ...this.filters,
-      [columnKey]: value,
-    };
+    // Update filters object
+    if (value === '' || value === null || value === undefined) {
+      // Remove filter if empty
+      const { [columnKey]: _, ...rest } = this.filters;
+      this.filters = rest;
+    } else {
+      this.filters = {
+        ...this.filters,
+        [columnKey]: value,
+      };
+    }
+
+    // Emit filter change for server-side filtering
+    if (this.serverSideFilters) {
+      // Reset to first page when filters change
+      if (this.currentPage !== 1) {
+        this.currentPage = 1;
+        this.pageChange.emit(1);
+      }
+      this.filterSubject.next({ ...this.filters });
+    }
   }
 
   protected filterValue(columnKey: string): string {
@@ -338,7 +371,8 @@ export class TableComponent implements OnDestroy, OnChanges {
       }
     }
 
-    if (this.enableFilters) {
+    // Only apply filters client-side if server-side filtering is disabled
+    if (this.enableFilters && !this.serverSideFilters) {
       for (const column of this.columns) {
         if (!column.filterable || !this.filters[column.key]) continue;
         const filterValue = this.filters[column.key].toLowerCase().trim();

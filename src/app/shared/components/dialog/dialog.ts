@@ -38,15 +38,19 @@ export class DialogComponent {
 
   @Output() closed = new EventEmitter<'backdrop' | 'escape' | 'close-button'>();
 
+  protected get isAnyButtonLoading(): boolean {
+    return this.buttons?.some((button) => button.loading) ?? false;
+  }
+
   @HostListener('document:keydown.escape')
   onEscape() {
-    if (this.open && !this.disableClose) {
+    if (this.open && !this.disableClose && !this.isAnyButtonLoading) {
       this.handleClose('escape');
     }
   }
 
   handleClose(reason: 'backdrop' | 'escape' | 'close-button') {
-    if (this.disableClose) {
+    if (this.disableClose || this.isAnyButtonLoading) {
       return;
     }
     this.closed.emit(reason);

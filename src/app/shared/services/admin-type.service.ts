@@ -28,6 +28,7 @@ export class AdminTypeService {
    * @param search - Search term (optional)
    * @param sortBy - Field name to sort by (optional)
    * @param sortDirection - Sort direction: 'asc' or 'desc' (optional)
+   * @param filters - Filter object with column keys and values (optional)
    * @returns Observable with paginated admin type data
    */
   findMany(
@@ -35,7 +36,8 @@ export class AdminTypeService {
     limit: number = 10,
     search?: string,
     sortBy?: string,
-    sortDirection?: 'asc' | 'desc'
+    sortDirection?: 'asc' | 'desc',
+    filters?: Record<string, string>
   ): Observable<AdminTypePaginatedResponse> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -51,6 +53,16 @@ export class AdminTypeService {
 
     if (sortDirection) {
       params = params.set('sortDirection', sortDirection);
+    }
+
+    // Add filters as query parameters (similar to term)
+    if (filters) {
+      Object.keys(filters).forEach((key) => {
+        const value = filters[key];
+        if (value && value.trim()) {
+          params = params.set(key, value.trim());
+        }
+      });
     }
 
     return this.http
@@ -161,7 +173,9 @@ export class AdminTypeService {
     const idsParam = Array.isArray(ids) ? ids.join(',') : ids;
 
     return this.http
-      .delete<ApiResponse<any>>(`${this.API_URL}/admin/admin-type/${idsParam}`)
+      .delete<ApiResponse<any>>(
+        `${this.API_URL}/admin/admin-type/delete/${idsParam}`
+      )
       .pipe(
         map((res) => {
           if (res.error === false && res.results === null) {
