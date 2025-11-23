@@ -191,20 +191,25 @@ export class AuthService {
   }
 
   getFirstAccessibleRoute(): string {
-    const routes = [
-      { path: 'overview', functionKey: 'dashboard' },
-      { path: 'admins', functionKey: 'admins' },
-      { path: 'admin-types', functionKey: 'adminTypes' },
-      { path: 'settings', functionKey: 'settings' },
-    ];
+    // Prioritize AI Readiness Assessment as default (no privilege required)
+    // This is the main feature of the application
+    return 'ai-readiness-assessment';
 
-    for (const route of routes) {
-      if (this.hasPrivilege(route.functionKey, PrivilegeAccess.R)) {
-        return route.path;
-      }
-    }
+    // Fallback to other routes if needed (currently disabled)
+    // const routes = [
+    //   { path: 'overview', functionKey: 'dashboard' },
+    //   { path: 'admins', functionKey: 'admins' },
+    //   { path: 'admin-types', functionKey: 'adminTypes' },
+    //   { path: 'settings', functionKey: 'settings' },
+    // ];
 
-    return 'profile';
+    // for (const route of routes) {
+    //   if (this.hasPrivilege(route.functionKey, PrivilegeAccess.R)) {
+    //     return route.path;
+    //   }
+    // }
+
+    // return 'profile';
   }
 
   get isLoggedIn(): boolean {
