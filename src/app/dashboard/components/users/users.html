@@ -1,0 +1,100 @@
+<div class="card border-0 shadow-sm h-100">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <p class="text-uppercase text-muted fw-semibold small mb-1">Directory</p>
+        <h2 class="h4 mb-0">Users</h2>
+      </div>
+      <app-button label="Create User" size="sm" variant="primary" icon="add" [functionKey]="functionKey"
+        [privilegeAccess]="writePrivilege" (click)="openCreateUserDialog()"></app-button>
+    </div>
+
+    <app-table [columns]="columns" [rows]="users()" [totalCount]="totalCount()" [showActions]="true"
+      [enableFilters]="true" [enableSorting]="true" [enablePagination]="true" [loading]="tableLoading()"
+      loadingLabel="Loading users..." [functionKey]="functionKey" [excludedActions]="excludedActions"
+      [serverSideSearch]="true" [serverSideFilters]="true" [sortBy]="sortBy" [sortDirection]="sortDirection"
+      (pageChange)="onPageChange($event)" (limitChange)="onLimitChange($event)" (searchChange)="onSearchChange($event)"
+      (filterChange)="onFilterChange($event)" (sortChange)="onSortChange($event)" (readAction)="onRead($event)"
+      (updateAction)="onUpdate($event)" (deleteAction)="onDelete($event)"></app-table>
+  </div>
+</div>
+
+<app-dialog [open]="isCreateDialogOpen" [title]="dialogTitle" [description]="dialogDescription"
+  (closed)="closeCreateUserDialog()">
+  <form dialog-body [formGroup]="createUserForm" class="form-grid">
+    <app-form-input [control]="emailControl" formControlName="email" label="Email" type="email"
+      placeholder="user@gmail.com" [required]="true">
+    </app-form-input>
+
+    <app-form-input [control]="firstNameControl" formControlName="firstName" label="First Name" type="text"
+      placeholder="John" [required]="true" [minlength]="2">
+    </app-form-input>
+
+    <app-form-input [control]="lastNameControl" formControlName="lastName" label="Last Name" type="text"
+      placeholder="Doe" [required]="true" [minlength]="2">
+    </app-form-input>
+
+    <div formGroupName="phone">
+      <app-form-input [control]="phoneCodeControl" formControlName="code" label="Phone Code" type="text"
+        placeholder="961">
+      </app-form-input>
+
+      <app-form-input [control]="phoneNumberControl" formControlName="number" label="Phone Number" type="text"
+        placeholder="71015691">
+      </app-form-input>
+    </div>
+
+    <app-form-input [control]="passwordControl" formControlName="password" label="Password" type="password"
+      [placeholder]="isEditMode ? 'Leave blank to keep current password' : 'Enter password'" [required]="!isEditMode"
+      [minlength]="6" hint="Minimum 6 characters">
+    </app-form-input>
+
+    <div class="image-field">
+      <app-image-upload label="Image" hint="PNG or JPG up to 5MB" [value]="imagePreview"
+        (valueChange)="onImageChange($event)" (fileSelected)="onImageFileSelected($event)"
+        [disabled]="createUserForm.disabled">
+      </app-image-upload>
+    </div>
+  </form>
+
+  <div dialog-footer>
+    <app-button label="Cancel" variant="text" [disabled]="createDialogLoading()"
+      (clicked)="closeCreateUserDialog()"></app-button>
+    <app-button [label]="createButtonLabel" variant="primary-gradient" [loading]="createDialogLoading()"
+      [disabled]="createDialogLoading()" [functionKey]="functionKey"
+      [privilegeAccess]="isEditMode ? PrivilegeAccess.U : PrivilegeAccess.W" (clicked)="onCreateUserSubmit()">
+    </app-button>
+  </div>
+</app-dialog>
+
+<app-dialog [open]="isDeleteDialogOpen" title="Delete user" description="This action cannot be undone."
+  width="460px" (closed)="closeDeleteDialog()">
+  <div dialog-body>
+    <div class="d-flex align-items-start gap-3">
+      <div class="text-danger">
+        <span class="material-symbols-rounded" style="font-size: 2rem;">warning</span>
+      </div>
+      <div>
+        <p class="fw-semibold mb-1">Are you sure you want to delete this user?</p>
+        @if (userToDelete) {
+        <p class="text-muted mb-0">
+          <strong>{{ userToDelete.firstName }} {{ userToDelete.lastName }}</strong> will be permanently
+          removed from the system. This action cannot be undone.
+        </p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div dialog-footer>
+    <app-button label="Cancel" variant="text" [disabled]="deleteDialogLoading()"
+      (clicked)="closeDeleteDialog()"></app-button>
+    <app-button [label]="deleteButtonLabel" variant="danger-gradient" [loading]="deleteDialogLoading()"
+      [disabled]="deleteDialogLoading()" [functionKey]="functionKey" [privilegeAccess]="deletePrivilege"
+      (clicked)="confirmDelete()"></app-button>
+  </div>
+</app-dialog>
+
+<app-sidebar [open]="isSidebarOpen" title="User Details" [fields]="sidebarFields" [data]="sidebarData"
+  (closed)="closeSidebar()"></app-sidebar>
+

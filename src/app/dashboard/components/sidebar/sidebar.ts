@@ -35,6 +35,13 @@ export class Sidebar {
       functionKey: 'dashboard',
     },
     {
+      label: 'Users',
+      description: 'View and manage users',
+      path: 'users',
+      icon: 'person',
+      functionKey: 'users',
+    },
+    {
       label: 'Admins',
       description: 'View and onboard new admins',
       path: 'admins',

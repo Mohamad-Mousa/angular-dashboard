@@ -108,7 +108,7 @@ export class SidebarComponent {
 
   protected getImageUrl(field: SidebarField): string | undefined {
     const value = this.getFieldValue(field);
-    if (!value || typeof value !== 'string') {
+    if (!value || typeof value !== 'string' || value.trim() === '') {
       return undefined;
     }
     

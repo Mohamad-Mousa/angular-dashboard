@@ -33,6 +33,14 @@ export const routes: Routes = [
         canActivate: [privilegeGuard('dashboard', PrivilegeAccess.R)],
       },
       {
+        path: 'users',
+        loadComponent: () =>
+          import('./dashboard/components/users/users').then(
+            (m) => m.UsersComponent
+          ),
+        canActivate: [privilegeGuard('users', PrivilegeAccess.R)],
+      },
+      {
         path: 'admins',
         loadComponent: () =>
           import('./dashboard/components/admins/admins').then(

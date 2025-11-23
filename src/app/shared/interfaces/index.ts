@@ -6,6 +6,7 @@ export type {
   Privilege,
   PrivilegePermission,
   User,
+  UserPaginatedResponse,
   UserAuthenticated,
   Function,
   CreateAdminTypeRequest,

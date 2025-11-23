@@ -73,11 +73,29 @@ export interface AdminPaginatedResponse {
   totalCount: number;
 }
 
+export interface Phone {
+  number: number;
+  code: number;
+}
+
 export interface User {
-  id?: string | number;
-  email?: string;
-  name?: string;
+  _id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: Phone;
+  image?: string;
+  isVerified: boolean;
+  isActive: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt?: string;
   [key: string]: any;
+}
+
+export interface UserPaginatedResponse {
+  data: User[];
+  totalCount: number;
 }
 
 export interface UserAuthenticated {
