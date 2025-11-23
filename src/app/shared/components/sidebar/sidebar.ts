@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StatusPillComponent, PillTone } from '../pill/pill';
+import { environment } from '../../../../environments/environment';
 
 export interface SidebarField {
   label: string;
@@ -103,6 +104,21 @@ export class SidebarComponent {
     } catch {
       return String(value);
     }
+  }
+
+  protected getImageUrl(field: SidebarField): string | undefined {
+    const value = this.getFieldValue(field);
+    if (!value || typeof value !== 'string') {
+      return undefined;
+    }
+    
+    // If the value already starts with http:// or https://, return as is
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+    
+    // Otherwise, prepend environment.IMG_URL
+    return environment.IMG_URL + value;
   }
 }
 

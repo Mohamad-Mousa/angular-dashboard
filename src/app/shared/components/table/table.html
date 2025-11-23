@@ -75,6 +75,13 @@
             <app-status-pill [label]="cellLabel(row, column)" [tone]="badgeClassFor(row, column)"
               size="sm"></app-status-pill>
             }
+            @case ('image') {
+            @if (getImageUrl(row, column)) {
+            <img [src]="getImageUrl(row, column)" [alt]="column.label" class="table-image" />
+            } @else {
+            <span class="text-muted">—</span>
+            }
+            }
             @default {
             <span>{{ row[column.key] ?? '—' }}</span>
             }

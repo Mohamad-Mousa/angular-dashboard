@@ -16,11 +16,12 @@ import { StatusPillComponent, PillTone } from '../pill/pill';
 import { LoaderComponent } from '../loader/loader';
 import { AuthService } from '@shared/services';
 import { PrivilegeAccess } from '@shared/enums';
+import { environment } from '../../../../environments/environment';
 
 export interface TableColumn {
   label: string;
   key: string;
-  type?: 'text' | 'badge';
+  type?: 'text' | 'badge' | 'image';
   badgeClassKey?: string;
   filterable?: boolean;
   filterType?: 'text' | 'select';
@@ -422,6 +423,24 @@ export class TableComponent implements OnDestroy, OnChanges {
       return '—';
     }
     return String(value);
+  }
+
+  protected getImageUrl(
+    row: Record<string, unknown>,
+    column: TableColumn
+  ): string | undefined {
+    const value = row[column.key];
+    if (!value || typeof value !== 'string') {
+      return undefined;
+    }
+
+    // If the value already starts with http:// or https://, return as is
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+
+    // Otherwise, prepend environment.IMG_URL
+    return environment.IMG_URL + value;
   }
 
   private mapTone(value: string): PillTone {

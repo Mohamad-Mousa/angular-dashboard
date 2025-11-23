@@ -22,8 +22,8 @@
             <app-status-pill [label]="getFieldLabel(field)" [tone]="badgeClassFor(field)" size="sm"></app-status-pill>
             }
             @case ('image') {
-            @if (getFieldValue(field)) {
-            <img [src]="getFieldValue(field)" [alt]="field.label" class="field-image" />
+            @if (getImageUrl(field)) {
+            <img [src]="getImageUrl(field)" [alt]="field.label" class="field-image" />
             } @else {
             <span class="text-muted">—</span>
             }
@@ -48,4 +48,3 @@
   </div>
 </div>
 }
-

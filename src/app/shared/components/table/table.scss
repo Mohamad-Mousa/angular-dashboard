@@ -235,6 +235,14 @@ tbody tr:last-child td {
   white-space: nowrap;
 }
 
+.table-image {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
 @media (max-width: 768px) {
   .table-pagination {
     flex-direction: column;

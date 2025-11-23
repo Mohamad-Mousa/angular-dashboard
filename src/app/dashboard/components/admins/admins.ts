@@ -48,6 +48,13 @@ export class AdminsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   protected readonly columns: TableColumn[] = [
+    {
+      label: 'Image',
+      key: 'image',
+      type: 'image',
+      filterable: false,
+      sortable: false,
+    },
     { label: 'Name', key: 'fullName', filterable: true, sortable: true },
     { label: 'Email', key: 'email', filterable: true, sortable: true },
     { label: 'Type', key: 'typeName', filterable: true, sortable: true },
@@ -220,6 +227,7 @@ export class AdminsComponent implements OnInit, OnDestroy {
       typeName: admin.type?.name || 'N/A',
       statusClass: admin.isActive ? 'success' : 'warning',
       isActive: admin.isActive ? 'Active' : 'Inactive',
+      image: admin.image || undefined,
     };
   }
 
@@ -531,6 +539,7 @@ export class AdminsComponent implements OnInit, OnDestroy {
       typeName: this.sidebarAdmin.type?.name || 'N/A',
       statusClass: this.sidebarAdmin.isActive ? 'success' : 'warning',
       isActive: this.sidebarAdmin.isActive ? 'Active' : 'Inactive',
+      image: this.sidebarAdmin.image || '',
     };
   }
 
