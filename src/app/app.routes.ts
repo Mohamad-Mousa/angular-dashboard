@@ -25,6 +25,14 @@ export const routes: Routes = [
           ).then((m) => m.DashboardRedirectComponent),
       },
       {
+        path: 'overview',
+        loadComponent: () =>
+          import('./dashboard/components/overview/overview').then(
+            (m) => m.OverviewComponent
+          ),
+        canActivate: [privilegeGuard('dashboard', PrivilegeAccess.R)],
+      },
+      {
         path: 'admins',
         loadComponent: () =>
           import('./dashboard/components/admins/admins').then(
@@ -55,41 +63,6 @@ export const routes: Routes = [
             (m) => m.SettingsComponent
           ),
         canActivate: [privilegeGuard('settings', PrivilegeAccess.R)],
-      },
-      {
-        path: 'ai-readiness-assessment',
-        loadComponent: () =>
-          import('./dashboard/components/ai-readiness-assessment/ai-readiness-assessment').then(
-            (m) => m.AIReadinessAssessmentComponent
-          ),
-      },
-      {
-        path: 'assessment',
-        loadComponent: () =>
-          import('./dashboard/components/assessment/assessment').then(
-            (m) => m.AssessmentComponent
-          ),
-      },
-      {
-        path: 'readiness-reports',
-        loadComponent: () =>
-          import('./dashboard/components/readiness-reports/readiness-reports').then(
-            (m) => m.ReadinessReportsComponent
-          ),
-      },
-      {
-        path: 'policy-generator',
-        loadComponent: () =>
-          import('./dashboard/components/policy-generator/policy-generator').then(
-            (m) => m.PolicyGeneratorComponent
-          ),
-      },
-      {
-        path: 'policy-library',
-        loadComponent: () =>
-          import('./dashboard/components/policy-library/policy-library').then(
-            (m) => m.PolicyLibraryComponent
-          ),
       },
       {
         path: 'profile',

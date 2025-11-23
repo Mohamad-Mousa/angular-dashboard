@@ -28,28 +28,11 @@ export class Sidebar {
 
   protected readonly allNavTabs: NavTab[] = [
     {
-      label: 'AI Readiness Assessment',
-      description: 'Complete questionnaires and provide evidence per domain',
-      path: 'ai-readiness-assessment',
-      icon: 'assessment',
-    },
-    {
-      label: 'Readiness Reports',
-      description: 'View per-domain scores, gap analysis, and recommendations',
-      path: 'readiness-reports',
-      icon: 'analytics',
-    },
-    {
-      label: 'Policy Generator',
-      description: 'Generate customized AI policies based on readiness findings',
-      path: 'policy-generator',
-      icon: 'auto_awesome',
-    },
-    {
-      label: 'Policy Library',
-      description: 'View, manage, and export generated AI policies',
-      path: 'policy-library',
-      icon: 'folder_special',
+      label: 'Overview',
+      description: 'Platform overview and statistics',
+      path: 'overview',
+      icon: 'dashboard',
+      functionKey: 'dashboard',
     },
     {
       label: 'Admins',
